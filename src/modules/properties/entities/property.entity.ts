@@ -286,7 +286,7 @@ export class Property {
     @JoinColumn({ name: 'agent_id' })
     agent: Agent;
 
-    // Computed properties
+    // Original computed properties
     get is_verified(): boolean {
         return this.verification_status === PropertyVerificationStatus.VERIFIED;
     }
@@ -327,7 +327,53 @@ export class Property {
         return this.images && this.images.length > 0;
     }
 
-    // Helper methods
+    // NEW ENHANCED COMPUTED PROPERTIES
+    @ApiProperty({
+        description: 'Formatted price display',
+        example: '₦750,000'
+    })
+    get formattedPrice(): string {
+        return `₦${Number(this.price).toLocaleString('en-NG')}`;
+    }
+
+    @ApiProperty({
+        description: 'Property summary for listings',
+        example: '2BR/2BA Flat in Lugbe - ₦750,000'
+    })
+    get propertySummary(): string {
+        return `${this.bedrooms}BR/${this.bathrooms}BA ${this.property_type} in ${this.location?.area} - ${this.formattedPrice}`;
+    }
+
+    @ApiProperty({
+        description: 'Whether property is currently available',
+        example: true
+    })
+    get isAvailable(): boolean {
+        return this.status === PropertyStatus.AVAILABLE && this.is_available === true;
+    }
+
+    @ApiProperty({
+        description: 'Property engagement score based on views and inquiries',
+        example: 85.5
+    })
+    get engagementScore(): number {
+        const viewWeight = 0.3;
+        const inquiryWeight = 0.7;
+        return (this.view_count * viewWeight) + (this.inquiry_count * inquiryWeight);
+    }
+
+    @ApiProperty({
+        description: 'Days since property was listed',
+        example: 15
+    })
+    get daysSinceListed(): number {
+        const now = new Date();
+        const created = new Date(this.created_at);
+        const diffTime = Math.abs(now.getTime() - created.getTime());
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // Original helper methods
     incrementInquiryCount(): void {
         this.inquiry_count += 1;
     }
@@ -377,6 +423,14 @@ export class Property {
             ...this.location,
             ...location,
         };
+    }
+
+    // NEW ENHANCED HELPER METHODS
+    addImages(imageUrls: string[]): void {
+        if (!this.images) {
+            this.images = [];
+        }
+        this.images = [...this.images, ...imageUrls];
     }
 
     // Matching score for user preferences (0-100)

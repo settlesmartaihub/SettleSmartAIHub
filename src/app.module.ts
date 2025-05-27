@@ -1,18 +1,21 @@
-// src/app.module.ts - ADD USERS MODULE
+// src/app.module.ts
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigurationModule } from './config/config.module';
 import { validationSchema } from './config/validation.schema';
-import  databaseConfig  from './config/database.config';
+import databaseConfig from './config/database.config';
 
 // Import all modules
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module'; // ADD THIS
+import { UsersModule } from './users/users.module';
 import { AgentsModule } from './modules/agents/agents.module';
-import { PropertiesModule } from './modules/properties/properties.module';
+import { PropertiesModule } from './properties/properties.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
 import { PropertySearchesModule } from './modules/property-searches/property-searches.module';
 
@@ -35,6 +38,12 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
     }),
     ConfigurationModule,
 
+    // Static file serving for uploaded images
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
+
     // Database
     TypeOrmModule.forRootAsync({
       useFactory: databaseConfig,
@@ -42,7 +51,7 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 
     // Feature Modules
     AuthModule,
-    UsersModule, // ADD THIS
+    UsersModule,
     AgentsModule,
     PropertiesModule,
     ConversationsModule,
@@ -68,4 +77,4 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
