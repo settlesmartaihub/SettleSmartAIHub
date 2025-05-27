@@ -128,3 +128,5 @@ export function getNetworkProvider(phone: string): string {
 
     return networks[prefix] || 'Other';
 }
+
+export const formatNigerianPhone = normalizePhoneNumber;

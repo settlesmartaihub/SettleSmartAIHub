@@ -1,55 +1,71 @@
-// Filename: src/app.module.ts
+// src/app.module.ts - ADD USERS MODULE
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-import { ConfigurationModule } from './config/config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ConfigurationModule } from './config/config.module';
+import { validationSchema } from './config/validation.schema';
+import  databaseConfig  from './config/database.config';
 
-// Import all feature modules (they handle their own controllers/services)
-import { UsersModule } from './modules/users/users.module';
+// Import all modules
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module'; // ADD THIS
 import { AgentsModule } from './modules/agents/agents.module';
 import { PropertiesModule } from './modules/properties/properties.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
 import { PropertySearchesModule } from './modules/property-searches/property-searches.module';
 
-// Import the new Auth module
-import { AuthModule } from './auth/auth.module';
+// Import middleware and filters
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ValidationPipe } from './common/pipes/validation.pipe';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 
 @Module({
   imports: [
-    // Configuration Module (must be first)
+    // Configuration
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
+    }),
     ConfigurationModule,
 
-    // Database Module with configuration
+    // Database
     TypeOrmModule.forRootAsync({
-      useFactory: (configService: ConfigService) => {
-        const dbConfig = configService.get('database');
-        if (!dbConfig) {
-          throw new Error('Database configuration not found');
-        }
-        return dbConfig;
-      },
-      inject: [ConfigService],
+      useFactory: databaseConfig,
     }),
 
-    // Authentication Module (add this)
+    // Feature Modules
     AuthModule,
-
-    // Feature Modules (these handle their own controllers/services)
-    UsersModule,
+    UsersModule, // ADD THIS
     AgentsModule,
     PropertiesModule,
     ConversationsModule,
     PropertySearchesModule,
   ],
-  controllers: [
-    AppController,
-    // Remove individual controllers - they're handled by their modules
-  ],
+  controllers: [AppController],
   providers: [
     AppService,
-    // Remove individual services - they're handled by their modules
+    // Global exception filter
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    // Global response interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    // Global validation pipe
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+    },
   ],
 })
-export class AppModule { }
+export class AppModule {}
