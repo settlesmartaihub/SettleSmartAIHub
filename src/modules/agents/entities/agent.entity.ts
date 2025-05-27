@@ -57,13 +57,18 @@ export class Agent {
     })
     phone_number: string;
 
+    // 🔐 UPDATED PASSWORD FIELD - Now required for new agents
+    @ApiProperty({
+        description: 'Encrypted password for authentication',
+        writeOnly: true,
+    })
     @Column({
         type: 'varchar',
         length: 255,
         select: false, // Don't include password in default selects
-        nullable: true  // Make it optional for existing records
+        nullable: false  // Make it required for security
     })
-    password?: string;
+    password: string;
 
     @ApiProperty({
         description: 'Agent full name',

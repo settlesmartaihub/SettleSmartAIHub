@@ -1,4 +1,4 @@
-// Filename: src/database/migrations/001-create-initial-schema.ts
+// Filename: src/database/migrations/001-create-initial-schema.ts - UPDATED VERSION
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateInitialSchema1706208000001 implements MigrationInterface {
@@ -57,11 +57,12 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       )
     `);
 
-    // Create Agents table (FIXED - using correct enum names)
+    // Create Agents table (UPDATED - with password field)
     await queryRunner.query(`
       CREATE TABLE "agents" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "phone_number" character varying(20) NOT NULL,
+        "password" character varying(255),
         "name" character varying(100) NOT NULL,
         "email" character varying(100),
         "business_name" character varying(200),
@@ -191,12 +192,13 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_results_count" ON "property_searches" ("results_count")`);
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_search_quality" ON "property_searches" ("search_quality")`);
 
-    console.log('SettleSmart AI database schema created successfully!');
-    console.log('Tables created: users, agents, properties, conversations, property_searches');
-    console.log('Indexes created for optimal performance');
-    console.log('Nigerian phone number support enabled');
-    console.log('WhatsApp integration ready');
-    console.log('AI conversation tracking ready');
+    console.log('✅ SettleSmart AI database schema created successfully!');
+    console.log('📊 Tables created: users, agents, properties, conversations, property_searches');
+    console.log('⚡ Indexes created for optimal performance');
+    console.log('🔐 Password authentication enabled for agents');
+    console.log('🇳🇬 Nigerian phone number support enabled');
+    console.log('📱 WhatsApp integration ready');
+    console.log('🤖 AI conversation tracking ready');
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -249,6 +251,6 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE IF EXISTS "agents_verification_status_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "users_status_enum"`);
 
-    console.log('SettleSmart AI database schema dropped successfully');
+    console.log('❌ SettleSmart AI database schema dropped successfully');
   }
 }

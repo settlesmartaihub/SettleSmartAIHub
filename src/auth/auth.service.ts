@@ -1,4 +1,4 @@
-// src/auth/auth.service.ts
+// Filename: src/auth/auth.service.ts
 
 import {
     Injectable,
@@ -41,9 +41,10 @@ export class AuthService {
                 user = await this.findOrCreateAdmin(email);
                 userRole = 'admin';
             } else {
-                // Try to find agent first, then user
+                // Try to find agent first (include password field if it exists)
                 user = await this.agentRepository.findOne({
-                    where: { email }
+                    where: { email },
+                    select: ['id', 'email', 'name', 'phone_number', 'business_name', 'verification_status', 'status', 'password']
                 });
 
                 if (user) {
@@ -51,7 +52,7 @@ export class AuthService {
                 } else {
                     // Check users table
                     user = await this.userRepository.findOne({
-                        where: { phone_number: email } // Users login with phone
+                        where: { phone_number: email }
                     });
                     userRole = 'user';
                 }
@@ -61,8 +62,21 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid credentials');
             }
 
-            // For demo purposes, we'll skip password verification for agents since the entity might not have password field
-            // In production, you should add a password field to Agent entity
+            // Password verification for agents and admins
+            if (userRole === 'agent' && user.password) {
+                // Only verify password if the agent has one set
+                const isPasswordValid = await comparePassword(password, user.password);
+                if (!isPasswordValid) {
+                    throw new UnauthorizedException('Invalid credentials');
+                }
+            } else if (userRole === 'admin') {
+                // Always verify admin password
+                const isPasswordValid = await comparePassword(password, user.password);
+                if (!isPasswordValid) {
+                    throw new UnauthorizedException('Invalid credentials');
+                }
+            }
+            // For agents without password set, allow login for backward compatibility
 
             // Check if user/agent is active
             if (user.status === 'inactive' || user.status === 'blocked' || user.status === 'suspended') {
@@ -108,14 +122,15 @@ export class AuthService {
                 throw new ConflictException('Agent with this email or phone already exists');
             }
 
-            // Hash password (we'll store it in a custom way since Agent entity might not have password field)
+            // Hash password
             const hashedPassword = await hashPassword(password);
 
-            // Create new agent - only using fields that exist in your Agent entity
+            // Create new agent data - FIXED: Proper typing
             const agentData = {
                 name,
                 email,
                 phone_number: normalizedPhone,
+                password: hashedPassword, // Password is now properly supported
                 business_name: businessName || name,
                 verification_status: 'pending' as any,
                 status: 'active' as any,
@@ -125,22 +140,22 @@ export class AuthService {
                 total_ratings: 0,
                 successful_leads: 0,
                 total_leads: 0,
-                // Note: password field might not exist in Agent entity
-                // You may need to add it to the entity or handle authentication differently
             };
 
+            // FIXED: Proper agent creation and saving
             const newAgent = this.agentRepository.create(agentData);
             const savedAgent = await this.agentRepository.save(newAgent);
 
-            // Generate tokens
-            const tokens = await this.generateTokens(savedAgent.id, savedAgent.email || savedAgent.phone_number, 'agent');
+            // FIXED: Proper access to savedAgent properties
+            const agentEmail = savedAgent.email || savedAgent.phone_number;
+            const tokens = await this.generateTokens(savedAgent.id, agentEmail, 'agent');
 
             return {
                 ...tokens,
                 user: {
                     id: savedAgent.id,
                     name: savedAgent.name,
-                    email: savedAgent.email || savedAgent.phone_number,
+                    email: agentEmail,
                     role: 'agent',
                     phone: savedAgent.phone_number,
                     businessName: savedAgent.business_name,
@@ -156,9 +171,43 @@ export class AuthService {
     }
 
     async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
-        // For now, we'll return a placeholder since Agent entity might not have password field
-        // In production, add password field to Agent entity
-        return { message: 'Password change not implemented yet - Agent entity needs password field' };
+        const { currentPassword, newPassword } = changePasswordDto;
+
+        try {
+            // Find agent with password field
+            const user = await this.agentRepository.findOne({
+                where: { id: userId },
+                select: ['id', 'password']
+            });
+
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+
+            // Check if user has a password field and it's set
+            if (!user.password) {
+                throw new BadRequestException('Password not set for this account. Please contact support.');
+            }
+
+            // Verify current password
+            const isCurrentPasswordValid = await comparePassword(currentPassword, user.password);
+            if (!isCurrentPasswordValid) {
+                throw new UnauthorizedException('Current password is incorrect');
+            }
+
+            // Hash new password
+            const hashedNewPassword = await hashPassword(newPassword);
+
+            // Update password
+            await this.agentRepository.update(userId, { password: hashedNewPassword });
+
+            return { message: 'Password changed successfully' };
+        } catch (error) {
+            if (error instanceof UnauthorizedException || error instanceof NotFoundException || error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new BadRequestException('Password change failed: ' + error.message);
+        }
     }
 
     async getProfile(userId: string, userRole: string): Promise<any> {
@@ -169,22 +218,11 @@ export class AuthService {
                     throw new NotFoundException('Agent not found');
                 }
 
+                // Remove password from response if it exists (safely)
+                const { password, ...agentProfile } = agent as any;
+
                 return {
-                    id: agent.id,
-                    name: agent.name,
-                    email: agent.email,
-                    phone_number: agent.phone_number,
-                    business_name: agent.business_name,
-                    verification_status: agent.verification_status,
-                    subscription_tier: agent.subscription_tier,
-                    location: agent.location,
-                    rating: agent.rating,
-                    total_ratings: agent.total_ratings,
-                    successful_leads: agent.successful_leads,
-                    total_leads: agent.total_leads,
-                    status: agent.status,
-                    created_at: agent.created_at,
-                    updated_at: agent.updated_at,
+                    ...agentProfile,
                     // Map to API-friendly names
                     phoneNumber: agent.phone_number,
                     businessName: agent.business_name,
@@ -193,6 +231,17 @@ export class AuthService {
                     totalRatings: agent.total_ratings,
                     successfulLeads: agent.successful_leads,
                     totalLeads: agent.total_leads,
+                    lastActivity: agent.last_activity,
+                    subscriptionExpiresAt: agent.subscription_expires_at,
+                    // Include computed properties if they exist
+                    isVerified: agent.is_verified,
+                    isActive: agent.is_active,
+                    isPremium: agent.is_premium,
+                    subscriptionActive: agent.subscription_active,
+                    maxListings: agent.max_listings,
+                    conversionRate: agent.conversion_rate,
+                    displayPhone: agent.display_phone,
+                    hasPassword: !!password, // Indicate if password is set
                 };
             } else if (userRole === 'user') {
                 const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -201,7 +250,6 @@ export class AuthService {
                 }
                 return {
                     ...user,
-                    // Map database field names to API field names
                     phoneNumber: user.phone_number,
                     locationPreference: user.location_preference,
                     budgetMin: user.budget_min,
@@ -287,6 +335,7 @@ export class AuthService {
             return {
                 id: 'admin-user-id',
                 email: 'admin@settlesmart.ng',
+                password: await hashPassword('admin123'), // Default admin password
                 name: 'System Admin',
                 role: 'admin',
                 status: 'active',
