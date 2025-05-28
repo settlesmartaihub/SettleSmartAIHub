@@ -476,4 +476,49 @@ export class PropertiesService {
             }
         });
     }
+
+    /**
+     * Find properties by agent ID (for agent dashboard)
+     */
+    async findByAgentId(agentId: string): Promise<Property[]> {
+        return await this.propertyRepository.find({
+            where: {
+                // Assuming you have an agent_id field in Property entity
+                // If not, you'll need to add it to the Property entity
+                // agent_id: agentId 
+            },
+            order: { created_at: 'DESC' },
+        });
+    }
+
+    /**
+     * Find properties by agent with pagination and filters
+     */
+    async findByAgent(
+        agentId: string,
+        filterDto: any
+    ): Promise<PaginatedResponse<Property>> {
+        const { page = 1, limit = 10, sort_by = 'created_at', sort_order = 'DESC' } = filterDto;
+
+        const queryBuilder = this.propertyRepository.createQueryBuilder('property')
+            .where('property.agent_id = :agentId', { agentId });
+
+        // Add sorting
+        queryBuilder.orderBy(`property.${sort_by}`, sort_order as 'ASC' | 'DESC');
+
+        // Add pagination
+        const offset = (page - 1) * limit;
+        queryBuilder.skip(offset).take(limit);
+
+        // Execute query
+        const [data, total] = await queryBuilder.getManyAndCount();
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            total_pages: Math.ceil(total / limit),
+        };
+    }
 }

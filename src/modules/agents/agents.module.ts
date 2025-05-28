@@ -1,4 +1,4 @@
-// Filename: src/modules/agents/agents.module.ts
+// File: src/modules/agents/agents.module.ts (Update existing)
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,4 +10,4 @@ import { AgentsRepository } from './agents.repository';
     providers: [AgentsRepository],
     exports: [AgentsRepository],
 })
-export class AgentsModule { }
+export class AgentsModule {}

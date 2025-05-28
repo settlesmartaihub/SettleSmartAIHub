@@ -395,4 +395,51 @@ export class UsersService {
             }
         });
     }
+
+    // Create a new user (for WhatsApp auto-registration)
+
+    async create(createUserData: {
+        name: string;
+        phone_number: string;
+        location: string;
+    }): Promise<User> {
+        const user = this.userRepository.create(createUserData);
+        return await this.userRepository.save(user);
+    }
+
+    /**
+     * Find user by phone number (for conversation auto-creation)
+     */
+    async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
+        return await this.userRepository.findOne({
+            where: { phone_number: phoneNumber },
+        });
+    }
+
+    /**
+     * Find all users with pagination (for agent lead generation)
+     */
+    async findAll(searchDto: { page: number; limit: number }): Promise<PaginatedResponse<User>> {
+        const { page = 1, limit = 10 } = searchDto;
+
+        const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+        // Add pagination
+        const offset = (page - 1) * limit;
+        queryBuilder.skip(offset).take(limit);
+
+        // Add ordering
+        queryBuilder.orderBy('user.created_at', 'DESC');
+
+        // Execute query
+        const [data, total] = await queryBuilder.getManyAndCount();
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            total_pages: Math.ceil(total / limit),
+        };
+    }
 }

@@ -1,4 +1,5 @@
-// Filename: src/modules/properties/entities/property.entity.ts
+// File: src/modules/properties/entities/property.entity.ts
+
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -78,9 +79,10 @@ export class Property {
     })
     @Column({
         type: 'uuid',
+        nullable: true, // Made nullable to avoid conflicts
         comment: 'Reference to the agent who owns this listing',
     })
-    agent_id: string;
+    agent_id?: string;
 
     @ApiProperty({
         description: 'Property title/headline',
@@ -279,14 +281,12 @@ export class Property {
     })
     updated_at: Date;
 
-    // Relationships
-    @ManyToOne(() => Agent, (agent) => agent.properties, {
-        onDelete: 'CASCADE',
-    })
+    // Relationships - Only ONE agent relationship
+    @ManyToOne(() => Agent, { onDelete: 'SET NULL' })
     @JoinColumn({ name: 'agent_id' })
-    agent: Agent;
+    agent?: Agent;
 
-    // Original computed properties
+    // Computed properties
     get is_verified(): boolean {
         return this.verification_status === PropertyVerificationStatus.VERIFIED;
     }
@@ -327,45 +327,25 @@ export class Property {
         return this.images && this.images.length > 0;
     }
 
-    // NEW ENHANCED COMPUTED PROPERTIES
-    @ApiProperty({
-        description: 'Formatted price display',
-        example: '₦750,000'
-    })
+    // Enhanced computed properties
     get formattedPrice(): string {
         return `₦${Number(this.price).toLocaleString('en-NG')}`;
     }
 
-    @ApiProperty({
-        description: 'Property summary for listings',
-        example: '2BR/2BA Flat in Lugbe - ₦750,000'
-    })
     get propertySummary(): string {
         return `${this.bedrooms}BR/${this.bathrooms}BA ${this.property_type} in ${this.location?.area} - ${this.formattedPrice}`;
     }
 
-    @ApiProperty({
-        description: 'Whether property is currently available',
-        example: true
-    })
     get isAvailable(): boolean {
         return this.status === PropertyStatus.AVAILABLE && this.is_available === true;
     }
 
-    @ApiProperty({
-        description: 'Property engagement score based on views and inquiries',
-        example: 85.5
-    })
     get engagementScore(): number {
         const viewWeight = 0.3;
         const inquiryWeight = 0.7;
         return (this.view_count * viewWeight) + (this.inquiry_count * inquiryWeight);
     }
 
-    @ApiProperty({
-        description: 'Days since property was listed',
-        example: 15
-    })
     get daysSinceListed(): number {
         const now = new Date();
         const created = new Date(this.created_at);
@@ -373,7 +353,7 @@ export class Property {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    // Original helper methods
+    // Helper methods
     incrementInquiryCount(): void {
         this.inquiry_count += 1;
     }
@@ -425,7 +405,6 @@ export class Property {
         };
     }
 
-    // NEW ENHANCED HELPER METHODS
     addImages(imageUrls: string[]): void {
         if (!this.images) {
             this.images = [];
