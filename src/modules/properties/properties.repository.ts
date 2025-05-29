@@ -1,4 +1,5 @@
-// Filename: src/modules/properties/properties.repository.ts
+// File name: src/modules/properties/properties.repository.ts
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike, Between, In } from 'typeorm';
@@ -26,9 +27,7 @@ export class PropertiesRepository {
         private readonly propertyRepository: Repository<Property>,
     ) { }
 
-    /**
-     * Create a new property
-     */
+    // Create a new property
     async create(
         agentId: string,
         createPropertyDto: CreatePropertyDto,
@@ -48,9 +47,7 @@ export class PropertiesRepository {
         return await this.propertyRepository.save(property);
     }
 
-    /**
-     * Find property by ID
-     */
+    // Find property by ID
     async findById(id: string): Promise<Property | null> {
         return await this.propertyRepository.findOne({
             where: { id },
@@ -58,25 +55,19 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Update property
-     */
+    // Update property
     async update(id: string, updatePropertyDto: UpdatePropertyDto): Promise<Property | null> {
         await this.propertyRepository.update(id, updatePropertyDto);
         return await this.findById(id);
     }
 
-    /**
-     * Delete property
-     */
+    // Delete property
     async delete(id: string): Promise<boolean> {
         const result = await this.propertyRepository.delete(id);
         return (result.affected || 0) > 0;
     }
 
-    /**
-     * Search properties with pagination and filters
-     */
+    // Search properties with pagination and filters
     async search(searchDto: PropertySearchDto): Promise<PaginatedResponse<Property>> {
         const {
             search,
@@ -180,9 +171,7 @@ export class PropertiesRepository {
         };
     }
 
-    /**
-     * Find available properties for rent
-     */
+    // Find available properties for rent
     async findAvailableProperties(limit: number = 20): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: {
@@ -196,9 +185,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Find properties by agent
-     */
+    // Find properties by agent
     async findByAgent(agentId: string): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: { agent_id: agentId },
@@ -207,9 +194,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Find properties by location
-     */
+    // Find properties by location
     async findByLocation(location: string, limit: number = 20): Promise<Property[]> {
         return await this.propertyRepository
             .createQueryBuilder('property')
@@ -226,9 +211,7 @@ export class PropertiesRepository {
             .getMany();
     }
 
-    /**
-     * Find properties by price range
-     */
+    // Find properties by price range
     async findByPriceRange(minPrice: number, maxPrice: number): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: {
@@ -241,9 +224,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Smart property matching based on user preferences
-     */
+    // Smart property matching based on user preferences
     async findMatchingProperties(matchDto: PropertyMatchDto): Promise<PropertyMatchResult[]> {
         const {
             budget_min,
@@ -329,9 +310,7 @@ export class PropertiesRepository {
         return propertiesWithScores;
     }
 
-    /**
-     * Update property verification status
-     */
+    // Update property verification status
     async updateVerificationStatus(
         id: string,
         status: PropertyVerificationStatus,
@@ -342,9 +321,7 @@ export class PropertiesRepository {
         return await this.findById(id);
     }
 
-    /**
-     * Update property status (available, rented, etc.)
-     */
+    // Update property status (available, rented, etc.)
     async updatePropertyStatus(
         id: string,
         status: PropertyStatus,
@@ -365,9 +342,7 @@ export class PropertiesRepository {
         return await this.findById(id);
     }
 
-    /**
-     * Increment inquiry count
-     */
+    // Increment inquiry count
     async incrementInquiryCount(id: string): Promise<void> {
         await this.propertyRepository
             .createQueryBuilder()
@@ -379,9 +354,7 @@ export class PropertiesRepository {
             .execute();
     }
 
-    /**
-     * Increment view count
-     */
+    // Increment view count
     async incrementViewCount(id: string): Promise<void> {
         await this.propertyRepository
             .createQueryBuilder()
@@ -393,9 +366,7 @@ export class PropertiesRepository {
             .execute();
     }
 
-    /**
-     * Add image to property
-     */
+    // Add image to property
     async addImage(id: string, imageUrl: string): Promise<Property | null> {
         const property = await this.findById(id);
         if (!property) return null;
@@ -406,9 +377,7 @@ export class PropertiesRepository {
         return await this.findById(id);
     }
 
-    /**
-     * Remove image from property
-     */
+    // Remove image from property
     async removeImage(id: string, imageUrl: string): Promise<Property | null> {
         const property = await this.findById(id);
         if (!property) return null;
@@ -419,9 +388,7 @@ export class PropertiesRepository {
         return await this.findById(id);
     }
 
-    /**
-     * Get property statistics
-     */
+    // Get property statistics
     async getPropertyStats(): Promise<{
         total: number;
         available: number;
@@ -488,9 +455,7 @@ export class PropertiesRepository {
         };
     }
 
-    /**
-     * Find properties pending verification
-     */
+    // Find properties pending verification
     async findPendingVerification(): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: {
@@ -501,9 +466,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Find popular properties (high inquiry count)
-     */
+    // Find popular properties (high inquiry count)
     async findPopularProperties(limit: number = 10): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: {
@@ -520,9 +483,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Find recent properties (last 7 days)
-     */
+    // Find recent properties (last 7 days)
     async findRecentProperties(days: number = 7): Promise<Property[]> {
         const date = new Date();
         date.setDate(date.getDate() - days);
@@ -539,9 +500,7 @@ export class PropertiesRepository {
         });
     }
 
-    /**
-     * Bulk update property status
-     */
+    // Bulk update property status
     async bulkUpdateStatus(
         propertyIds: string[],
         status: PropertyStatus,
@@ -550,9 +509,7 @@ export class PropertiesRepository {
         return result.affected || 0;
     }
 
-    /**
-     * Check agent listing limits
-     */
+    // Check agent listing limits
     async checkAgentListingLimit(agentId: string, maxListings: number): Promise<{
         current_count: number;
         can_add_more: boolean;
@@ -569,9 +526,7 @@ export class PropertiesRepository {
         };
     }
 
-    /**
-     * Find similar properties for recommendations
-     */
+    // Find similar properties for recommendations
     async findSimilarProperties(
         propertyId: string,
         limit: number = 5,
@@ -603,9 +558,7 @@ export class PropertiesRepository {
             .getMany();
     }
 
-    /**
-     * Get properties by bedrooms distribution
-     */
+    // Get properties by bedrooms distribution
     async getBedroomDistribution(): Promise<Record<number, number>> {
         const results = await this.propertyRepository
             .createQueryBuilder('property')
@@ -627,9 +580,7 @@ export class PropertiesRepository {
         return distribution;
     }
 
-    /**
-     * Get price statistics by location
-     */
+    // Get price statistics by location
     async getPriceStatsByLocation(): Promise<Array<{
         location: string;
         count: number;
@@ -662,9 +613,7 @@ export class PropertiesRepository {
             );
     }
 
-    /**
-     * Search properties with fuzzy location matching
-     */
+    // Search properties with fuzzy location matching
     async fuzzyLocationSearch(
         searchTerm: string,
         limit: number = 20,

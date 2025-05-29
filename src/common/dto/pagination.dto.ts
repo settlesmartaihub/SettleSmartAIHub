@@ -1,4 +1,4 @@
-// File: src/common/dto/pagination.dto.ts
+// File name: src/common/dto/pagination.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsNumber, Min, Max } from 'class-validator';

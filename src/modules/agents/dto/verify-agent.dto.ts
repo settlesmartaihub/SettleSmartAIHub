@@ -1,4 +1,4 @@
-// File: src/modules/agents/dto/verify-agent.dto.ts
+// File name: src/modules/agents/dto/verify-agent.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';

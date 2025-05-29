@@ -1,4 +1,4 @@
-// Filename: src/modules/properties/dto/update-property.dto.ts
+// File name: src/modules/properties/dto/update-property.dto.ts
 
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreatePropertyDto } from './create-property.dto';

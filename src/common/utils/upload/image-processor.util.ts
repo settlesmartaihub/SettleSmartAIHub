@@ -1,4 +1,5 @@
-// src/common/utils/upload/image-processor.util.ts
+// File name: src/common/utils/upload/image-processor.util.ts
+
 export class ImageProcessorUtil {
     static async resizeImage(inputPath: string, outputPath: string, width: number, height: number): Promise<void> {
         // Mock implementation - in production, use Sharp or similar library

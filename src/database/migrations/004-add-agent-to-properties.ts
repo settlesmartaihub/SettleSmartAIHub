@@ -1,4 +1,4 @@
-// File: src/database/migrations/004-add-agent-to-properties.ts
+// File name: src/database/migrations/004-add-agent-to-properties.ts
 
 import { MigrationInterface, QueryRunner } from 'typeorm';
 

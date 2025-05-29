@@ -1,4 +1,4 @@
-// Filename: src/modules/properties/dto/property-search.dto.ts
+// File name: src/modules/properties/dto/property-search.dto.ts
 
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import {

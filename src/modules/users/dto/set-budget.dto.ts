@@ -1,4 +1,4 @@
-// File: src/modules/users/dto/set-budget.dto.ts
+// File name: src/modules/users/dto/set-budget.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, Min, IsEnum, IsOptional } from 'class-validator';

@@ -1,4 +1,4 @@
-// Filename: src/modules/property-searches/property-searches.repository.ts
+// File name: src/modules/property-searches/property-searches.repository.ts
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';

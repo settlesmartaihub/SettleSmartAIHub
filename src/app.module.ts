@@ -14,7 +14,7 @@ import databaseConfig from './config/database.config';
 // Import all modules
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { AgentsModule } from './agents/agents.module'; // Add this line
+import { AgentsModule } from './agents/agents.module';
 import { PropertiesModule } from './properties/properties.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
 import { PropertySearchesModule } from './modules/property-searches/property-searches.module';
@@ -37,22 +37,22 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
       },
     }),
     ConfigurationModule,
-    
+
     // Static file serving for uploaded images
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-    
+
     // Database
     TypeOrmModule.forRootAsync({
       useFactory: databaseConfig,
     }),
-    
+
     // Feature Modules
     AuthModule,
     UsersModule,
-    AgentsModule, // Add this line
+    AgentsModule,
     PropertiesModule,
     ConversationsModule,
     PropertySearchesModule,
@@ -77,4 +77,4 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

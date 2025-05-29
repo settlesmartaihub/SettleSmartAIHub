@@ -1,4 +1,4 @@
-// Filename: src/common/filters/all-exceptions.filter.ts
+// File name: src/common/filters/all-exceptions.filter.ts
 
 import {
     ExceptionFilter,

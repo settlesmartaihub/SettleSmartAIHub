@@ -1,2 +1,3 @@
-// src/services/index.ts
+// File name: src/services/index.ts
+
 export { PropertyMatchingService } from './property-matching.service';

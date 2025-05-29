@@ -1,4 +1,4 @@
-// Filename: src/modules/property-searches/entities/property-search.entity.ts
+// File name: src/modules/property-searches/entities/property-search.entity.ts
 
 import {
     Entity,

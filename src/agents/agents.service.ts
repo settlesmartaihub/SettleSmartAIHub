@@ -24,9 +24,7 @@ export class AgentsService {
         private readonly usersService: UsersService,
     ) { }
 
-    /**
-     * Create a new agent
-     */
+    // Create a new agent
     async create(createAgentDto: CreateAgentDto): Promise<Agent> {
         // Check if agent already exists with this phone number
         const existingAgent = await this.agentRepository.findOne({
@@ -59,9 +57,8 @@ export class AgentsService {
         return await this.agentRepository.save(agent);
     }
 
-    /**
-     * Find all agents with pagination and filters
-     */
+
+    // Find all agents with pagination and filters
     async findAll(searchDto: AgentSearchDto): Promise<PaginatedResponse<Agent>> {
         const {
             name,
@@ -122,9 +119,7 @@ export class AgentsService {
         };
     }
 
-    /**
-     * Find agent by ID
-     */
+    // Find agent by ID
     async findById(id: string): Promise<Agent> {
         const agent = await this.agentRepository.findOne({ where: { id } });
         if (!agent) {
@@ -133,27 +128,21 @@ export class AgentsService {
         return agent;
     }
 
-    /**
-     * Find agent by phone number
-     */
+    // Find agent by phone number
     async findByPhone(phoneNumber: string): Promise<Agent | null> {
         return await this.agentRepository.findOne({
             where: { phone_number: phoneNumber },
         });
     }
 
-    /**
-     * Find agent by email
-     */
+    // Find agent by email
     async findByEmail(email: string): Promise<Agent | null> {
         return await this.agentRepository.findOne({
             where: { email },
         });
     }
 
-    /**
-     * Update agent
-     */
+    // Update agent
     async update(id: string, updateAgentDto: UpdateAgentDto): Promise<Agent> {
         const agent = await this.findById(id);
 
@@ -177,9 +166,9 @@ export class AgentsService {
         return await this.findById(id);
     }
 
-    /**
-     * Verify agent (Admin only) - FIXED TO USE CORRECT DTO FIELDS
-     */
+
+    // Verify agent (Admin only) - FIXED TO USE CORRECT DTO FIELDS
+
     async verifyAgent(id: string, verifyAgentDto: VerifyAgentDto): Promise<Agent> {
         const agent = await this.findById(id);
 
@@ -516,7 +505,7 @@ export class AgentsService {
     }
 
     /**
-     * Reactivate suspended agent - FIXED verification_status enum usage
+     * Reactivate suspended agent
      */
     async reactivate(id: string): Promise<Agent> {
         const agent = await this.findById(id);

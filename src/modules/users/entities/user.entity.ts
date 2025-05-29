@@ -1,4 +1,5 @@
-// src/modules/users/entities/user.entity.ts
+// File name: src/modules/users/entities/user.entity.ts
+
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -311,7 +312,7 @@ export class User {
         description: 'Days since last conversation',
         example: 2
     })
-    
+
     get daysSinceLastMessage(): number {
         const lastMessage = this.conversationState?.lastMessageAt;
         if (!lastMessage) return Infinity;

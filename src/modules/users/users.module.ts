@@ -1,4 +1,4 @@
-// Filename: src/modules/users/users.module.ts
+// File name: src/modules/users/users.module.ts
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';

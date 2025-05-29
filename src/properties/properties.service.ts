@@ -1,4 +1,5 @@
-// src/properties/properties.service.ts
+// File name: src/properties/properties.service.ts
+
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, FindOptionsWhere } from 'typeorm';
@@ -477,9 +478,7 @@ export class PropertiesService {
         });
     }
 
-    /**
-     * Find properties by agent ID (for agent dashboard)
-     */
+    // Find properties by agent ID (for agent dashboard)
     async findByAgentId(agentId: string): Promise<Property[]> {
         return await this.propertyRepository.find({
             where: {
@@ -491,9 +490,7 @@ export class PropertiesService {
         });
     }
 
-    /**
-     * Find properties by agent with pagination and filters
-     */
+    // Find properties by agent with pagination and filters
     async findByAgent(
         agentId: string,
         filterDto: any

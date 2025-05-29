@@ -1,4 +1,4 @@
-// Filename: src/modules/conversations/conversations.repository.ts
+// File name: src/modules/conversations/conversations.repository.ts
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,9 +21,7 @@ export class ConversationsRepository {
         private readonly conversationRepository: Repository<Conversation>,
     ) { }
 
-    /**
-     * Create a new conversation
-     */
+    // Create a new conversation
     async create(createConversationDto: CreateConversationDto): Promise<Conversation> {
         const conversation = this.conversationRepository.create({
             ...createConversationDto,
@@ -36,9 +34,7 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Find conversation by ID
-     */
+    // Find conversation by ID
     async findById(id: string): Promise<Conversation | null> {
         return await this.conversationRepository.findOne({
             where: { id },
@@ -46,9 +42,7 @@ export class ConversationsRepository {
         });
     }
 
-    /**
-     * Find conversation by session ID
-     */
+    // Find conversation by session ID
     async findBySessionId(sessionId: string): Promise<Conversation | null> {
         return await this.conversationRepository.findOne({
             where: { session_id: sessionId },
@@ -56,9 +50,7 @@ export class ConversationsRepository {
         });
     }
 
-    /**
-     * Find active conversation by user phone
-     */
+    // Find active conversation by user phone
     async findActiveByUserPhone(userPhone: string): Promise<Conversation | null> {
         return await this.conversationRepository.findOne({
             where: {
@@ -70,9 +62,7 @@ export class ConversationsRepository {
         });
     }
 
-    /**
-     * Find conversations by user phone
-     */
+    // Find conversations by user phone
     async findByUserPhone(
         userPhone: string,
         limit: number = 10,
@@ -85,9 +75,7 @@ export class ConversationsRepository {
         });
     }
 
-    /**
-     * Update conversation
-     */
+    // Update conversation
     async update(
         id: string,
         updateConversationDto: UpdateConversationDto,
@@ -115,9 +103,7 @@ export class ConversationsRepository {
         return await this.findById(id);
     }
 
-    /**
-     * Add message to conversation
-     */
+    // Add message to conversation
     async addMessage(
         id: string,
         message: Omit<WhatsAppMessage, 'id' | 'timestamp'>,
@@ -129,9 +115,7 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Update conversation context
-     */
+    // Update conversation context
     async updateContext(
         id: string,
         contextUpdate: Partial<ConversationContext>,
@@ -143,9 +127,8 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Search conversations with filters and pagination
-     */
+
+    // Search conversations with filters and pagination
     async search(searchDto: ConversationSearchDto): Promise<PaginatedResponse<Conversation>> {
         const {
             user_phone,
@@ -216,9 +199,7 @@ export class ConversationsRepository {
         };
     }
 
-    /**
-     * Mark conversation as completed
-     */
+    // Mark conversation as completed
     async markCompleted(id: string, reason?: string): Promise<Conversation | null> {
         const conversation = await this.findById(id);
         if (!conversation) return null;
@@ -227,9 +208,7 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Mark conversation as waiting for user
-     */
+    // Mark conversation as waiting for user
     async markWaitingForUser(id: string): Promise<Conversation | null> {
         const conversation = await this.findById(id);
         if (!conversation) return null;
@@ -238,9 +217,7 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Reactivate conversation
-     */
+    // Reactivate conversation
     async reactivate(id: string): Promise<Conversation | null> {
         const conversation = await this.findById(id);
         if (!conversation) return null;
@@ -249,9 +226,7 @@ export class ConversationsRepository {
         return await this.conversationRepository.save(conversation);
     }
 
-    /**
-     * Find stale conversations (inactive for specified hours)
-     */
+    // Find stale conversations (inactive for specified hours)
     async findStaleConversations(hours: number = 24): Promise<Conversation[]> {
         const staleTime = new Date();
         staleTime.setHours(staleTime.getHours() - hours);
@@ -266,9 +241,7 @@ export class ConversationsRepository {
         });
     }
 
-    /**
-     * Find conversations by intent
-     */
+    // Find conversations by intent
     async findByIntent(intent: string, limit: number = 50): Promise<Conversation[]> {
         return await this.conversationRepository
             .createQueryBuilder('conversation')
@@ -279,9 +252,7 @@ export class ConversationsRepository {
             .getMany();
     }
 
-    /**
-     * Find conversations with property recommendations
-     */
+    // Find conversations with property recommendations
     async findWithPropertyRecommendations(): Promise<Conversation[]> {
         return await this.conversationRepository
             .createQueryBuilder('conversation')
@@ -292,9 +263,7 @@ export class ConversationsRepository {
             .getMany();
     }
 
-    /**
-     * Get conversation statistics
-     */
+    // Get conversation statistics
     async getConversationStats(days: number = 7): Promise<{
         total: number;
         active: number;
@@ -392,9 +361,7 @@ export class ConversationsRepository {
         };
     }
 
-    /**
-     * Delete old conversations
-     */
+    // Delete old conversations
     async deleteOldConversations(daysOld: number = 90): Promise<number> {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysOld);
@@ -407,9 +374,7 @@ export class ConversationsRepository {
         return result.affected || 0;
     }
 
-    /**
-     * Find conversations for user analytics
-     */
+    // Find conversations for user analytics
     async findForUserAnalytics(userPhone: string): Promise<{
         total_conversations: number;
         completed_conversations: number;
@@ -459,26 +424,20 @@ export class ConversationsRepository {
         };
     }
 
-    /**
-     * Delete conversation
-     */
+    // Delete conversation
     async delete(id: string): Promise<boolean> {
         const result = await this.conversationRepository.delete(id);
         return (result.affected || 0) > 0;
     }
 
-    /**
-     * Update last activity for conversation
-     */
+    // Update last activity for conversation
     async updateLastActivity(id: string): Promise<void> {
         await this.conversationRepository.update(id, {
             last_activity_at: new Date(),
         });
     }
 
-    /**
-     * Generate session ID for new conversation
-     */
+    // Generate session ID for new conversation
     generateSessionId(userPhone: string): string {
         const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
         const phoneDigits = userPhone.replace(/\D/g, '').slice(-6);

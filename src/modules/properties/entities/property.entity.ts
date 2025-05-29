@@ -1,4 +1,4 @@
-// File: src/modules/properties/entities/property.entity.ts
+// File name: src/modules/properties/entities/property.entity.ts
 
 import {
     Entity,

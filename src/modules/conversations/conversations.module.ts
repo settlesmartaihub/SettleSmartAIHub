@@ -1,4 +1,4 @@
-// File: src/modules/conversations/conversations.module.ts
+// File name: src/modules/conversations/conversations.module.ts
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -17,4 +17,4 @@ import { UsersModule } from '../../users/users.module';
     providers: [ConversationsRepository, ConversationsService],
     exports: [ConversationsRepository, ConversationsService],
 })
-export class ConversationsModule {}
+export class ConversationsModule { }

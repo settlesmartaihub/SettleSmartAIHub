@@ -1,4 +1,5 @@
-// src/properties/dto/create-property.dto.ts
+// File name: src/properties/dto/create-property.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsEnum, IsArray, IsObject, MinLength, Min, Max, IsOptional } from 'class-validator';
 

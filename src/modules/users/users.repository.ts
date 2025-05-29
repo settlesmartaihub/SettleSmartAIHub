@@ -1,4 +1,5 @@
-// src/modules/users/users.repository.ts
+// File name: src/modules/users/users.repository.ts
+
 import { EntityRepository, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 

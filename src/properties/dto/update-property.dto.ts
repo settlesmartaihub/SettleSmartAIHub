@@ -1,4 +1,5 @@
-// src/properties/dto/update-property.dto.ts
+// File name: src/properties/dto/update-property.dto.ts
+
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { CreatePropertyDto } from './create-property.dto';

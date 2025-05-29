@@ -1,8 +1,8 @@
+// File name: src/users/users.service.ts
+
 // ========================================
 // COMPLETE USER MANAGEMENT IMPLEMENTATION
 // ========================================
-
-// File name: src/users/users.service.ts
 
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -397,7 +397,6 @@ export class UsersService {
     }
 
     // Create a new user (for WhatsApp auto-registration)
-
     async create(createUserData: {
         name: string;
         phone_number: string;
@@ -407,18 +406,14 @@ export class UsersService {
         return await this.userRepository.save(user);
     }
 
-    /**
-     * Find user by phone number (for conversation auto-creation)
-     */
+    // Find user by phone number (for conversation auto-creation)
     async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
         return await this.userRepository.findOne({
             where: { phone_number: phoneNumber },
         });
     }
 
-    /**
-     * Find all users with pagination (for agent lead generation)
-     */
+    // Find all users with pagination (for agent lead generation)
     async findAll(searchDto: { page: number; limit: number }): Promise<PaginatedResponse<User>> {
         const { page = 1, limit = 10 } = searchDto;
 

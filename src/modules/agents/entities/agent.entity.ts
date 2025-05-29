@@ -1,4 +1,4 @@
-// Filename: src/modules/agents/entities/agent.entity.ts
+// File name: src/modules/agents/entities/agent.entity.ts
 
 import {
     Entity,
@@ -57,7 +57,7 @@ export class Agent {
     })
     phone_number: string;
 
-    // 🔐 UPDATED PASSWORD FIELD - Now required for new agents
+    // UPDATED PASSWORD FIELD - Now required for new agents
     @ApiProperty({
         description: 'Encrypted password for authentication',
         writeOnly: true,

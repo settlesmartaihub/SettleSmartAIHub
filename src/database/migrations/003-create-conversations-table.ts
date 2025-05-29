@@ -1,4 +1,4 @@
-// File: src/database/migrations/003-create-conversations-table.ts
+// File name: src/database/migrations/003-create-conversations-table.ts
 
 import { MigrationInterface, QueryRunner } from 'typeorm';
 

@@ -1,4 +1,5 @@
-// src/properties/dto/property-filter.dto.ts
+// File name: src/properties/dto/property-filter.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 

@@ -1,4 +1,4 @@
-// Filename: src/modules/agents/dto/update-agent.dto.ts
+// File name: src/modules/agents/dto/update-agent.dto.ts
 
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreateAgentDto } from './create-agent.dto';

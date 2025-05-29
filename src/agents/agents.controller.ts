@@ -1,4 +1,4 @@
-// File: src/agents/agents.controller.ts
+// File name: src/agents/agents.controller.ts
 
 import {
     Controller,
@@ -40,7 +40,7 @@ import { AgentPropertiesFilterDto } from '../modules/agents/dto/agent-properties
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class AgentsController {
-    constructor(private readonly agentsService: AgentsService) {}
+    constructor(private readonly agentsService: AgentsService) { }
 
     @Post()
     @Roles(UserRole.ADMIN)

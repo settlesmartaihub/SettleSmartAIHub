@@ -1,4 +1,5 @@
-// src/properties/dto/index.ts
+// File name: src/properties/dto/index.ts
+
 export { CreatePropertyDto, PropertyLocationDto } from './create-property.dto';
 export { UpdatePropertyDto } from './update-property.dto';
 export { PropertySearchDto } from './property-search.dto';

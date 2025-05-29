@@ -1,4 +1,4 @@
-// Filename: src/modules/conversations/dto/add-message.dto.ts
+// File name: src/modules/conversations/dto/add-message.dto.ts
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {

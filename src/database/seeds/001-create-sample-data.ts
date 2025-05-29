@@ -19,7 +19,7 @@ export class CreateSampleData {
     constructor(private dataSource: DataSource) { }
 
     async run(): Promise<void> {
-        console.log('🌱 Creating sample data for SettleSmart AI...');
+        console.log('Creating sample data for SettleSmart AI...');
 
         try {
             // Create sample users (property seekers)

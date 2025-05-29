@@ -1,4 +1,5 @@
-// Filename: src/common/interfaces/response.interface.ts
+// File name: src/common/interfaces/response.interface.ts
+
 export interface ApiResponse<T = any> {
     success: boolean;
     message: string;

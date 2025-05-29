@@ -1,4 +1,4 @@
-// Filename: src/modules/conversations/entities/conversation.entity.ts
+// File name: src/modules/conversations/entities/conversation.entity.ts
 
 import {
     Entity,

@@ -1,4 +1,5 @@
-// src/properties/dto/upload-images.dto.ts
+// File name: src/properties/dto/upload-images.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UploadImagesDto {

@@ -1,4 +1,5 @@
-// src/common/utils/upload/file-upload.util.ts
+// File name: src/common/utils/upload/file-upload.util.ts
+
 import { BadRequestException } from '@nestjs/common';
 import * as multer from 'multer';
 import * as path from 'path';

@@ -1,4 +1,4 @@
-// File: src/database/seeds/002-add-conversation-sample-data.ts
+// File name: src/database/seeds/002-add-conversation-sample-data.ts
 
 import { DataSource } from 'typeorm';
 import { User } from '../../modules/users/entities/user.entity';

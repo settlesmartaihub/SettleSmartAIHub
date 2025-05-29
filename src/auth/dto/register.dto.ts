@@ -1,4 +1,5 @@
-// src/auth/dto/register.dto.ts - CORRECTED VERSION
+// src/auth/dto/register.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
 import { IsNigerianPhone } from '../../common/decorators/phone-validation.decorator';

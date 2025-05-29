@@ -1,4 +1,4 @@
-// File: src/modules/agents/dto/update-subscription.dto.ts
+// File name: src/modules/agents/dto/update-subscription.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';

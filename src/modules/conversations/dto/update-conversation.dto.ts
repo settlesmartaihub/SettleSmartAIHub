@@ -1,4 +1,4 @@
-// Filename: src/modules/conversations/dto/update-conversation.dto.ts
+// File name: src/modules/conversations/dto/update-conversation.dto.ts
 
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsIn } from 'class-validator';

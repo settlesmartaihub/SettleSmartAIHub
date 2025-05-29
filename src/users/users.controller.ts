@@ -1,8 +1,8 @@
+// File name: src/users/users.controller.ts
+
 // ========================================
 // USERS CONTROLLER - COMPLETE API ENDPOINTS
 // ========================================
-
-// File name: src/users/users.controller.ts
 
 import {
     Controller,

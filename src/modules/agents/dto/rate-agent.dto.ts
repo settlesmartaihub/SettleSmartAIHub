@@ -1,4 +1,4 @@
-// File: src/modules/agents/dto/rate-agent.dto.ts
+// File name: src/modules/agents/dto/rate-agent.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, Min, Max, IsOptional, IsString, MaxLength } from 'class-validator';

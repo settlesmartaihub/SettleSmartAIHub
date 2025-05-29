@@ -1,40 +1,31 @@
-// src/common/utils/encryption.util.ts - CORRECTED VERSION
+// File name: src/common/utils/encryption.util.ts
+
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
 const SALT_ROUNDS = 12;
 
-/**
- * Hash a plain text password
- */
+// Hash a plain text password
 export async function hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-/**
- * Compare a plain text password with a hashed password
- */
+// Compare a plain text password with a hashed password
 export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
 }
 
-/**
- * Generate a random token
- */
+// Generate a random token
 export function generateToken(length: number = 32): string {
     return crypto.randomBytes(length).toString('hex');
 }
 
-/**
- * Generate a random API key
- */
+// Generate a random API key
 export function generateApiKey(length: number = 16): string {
     return crypto.randomBytes(length).toString('hex');
 }
 
-/**
- * Generate a random OTP (One-Time Password)
- */
+// Generate a random OTP (One-Time Password)
 export function generateOTP(length: number = 6): string {
     const digits = '0123456789';
     let otp = '';
@@ -46,9 +37,7 @@ export function generateOTP(length: number = 6): string {
     return otp;
 }
 
-/**
- * Encrypt sensitive data using AES-256-GCM
- */
+// Encrypt sensitive data using AES-256-GCM
 export function encrypt(text: string, key: string): string {
     try {
         const algorithm = 'aes-256-gcm';
@@ -68,9 +57,7 @@ export function encrypt(text: string, key: string): string {
     }
 }
 
-/**
- * Decrypt sensitive data using AES-256-GCM
- */
+// Decrypt sensitive data using AES-256-GCM
 export function decrypt(encryptedText: string, key: string): string {
     try {
         const algorithm = 'aes-256-gcm';
@@ -97,16 +84,12 @@ export function decrypt(encryptedText: string, key: string): string {
     }
 }
 
-/**
- * Simple hash function for non-sensitive data
- */
+// Simple hash function for non-sensitive data
 export function simpleHash(text: string): string {
     return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-/**
- * Generate a secure random password
- */
+// Generate a secure random password
 export function generateSecurePassword(length: number = 16): string {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';

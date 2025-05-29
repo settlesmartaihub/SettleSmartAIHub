@@ -1,4 +1,4 @@
-// File: src/agents/agents.module.ts
+// File name: src/agents/agents.module.ts
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -18,4 +18,4 @@ import { UsersModule } from '../users/users.module';
     providers: [AgentsService],
     exports: [AgentsService],
 })
-export class AgentsModule {}
+export class AgentsModule { }

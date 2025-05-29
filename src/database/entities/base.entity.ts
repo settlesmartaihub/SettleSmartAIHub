@@ -1,4 +1,4 @@
-// Filename: src/database/entities/base.entity.ts
+// File name: src/database/entities/base.entity.ts
 
 import {
     PrimaryGeneratedColumn,

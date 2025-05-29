@@ -1,4 +1,5 @@
-// File: src/modules/agents/dto/create-agent.dto.ts (CORRECTED)
+// File name: src/modules/agents/dto/create-agent.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsArray, IsOptional, IsEnum } from 'class-validator';
 import { AgentSubscriptionTier } from '../entities/agent.entity';

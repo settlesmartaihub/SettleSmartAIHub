@@ -1,4 +1,4 @@
-// File: src/modules/conversations/conversations.controller.ts
+// File name: src/modules/conversations/conversations.controller.ts
 
 import {
     Controller,

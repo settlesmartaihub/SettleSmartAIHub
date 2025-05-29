@@ -1,11 +1,12 @@
-// Filename: src/database/migrations/001-create-initial-schema.ts - UPDATED VERSION
+// Filename: src/database/migrations/001-create-initial-schema.ts
+
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateInitialSchema1706208000001 implements MigrationInterface {
   name = 'CreateInitialSchema1706208000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Create enums (FIXED - using TypeORM expected naming convention)
+    // Create enums (using TypeORM expected naming convention)
     await queryRunner.query(`
       CREATE TYPE "users_status_enum" AS ENUM('active', 'inactive', 'blocked')
     `);
@@ -37,7 +38,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       CREATE TYPE "property_searches_search_quality_enum" AS ENUM('excellent', 'good', 'fair', 'poor')
     `);
 
-    // Create Users table (FIXED - using correct enum names)
+    // Create Users table
     await queryRunner.query(`
       CREATE TABLE "users" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -57,7 +58,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       )
     `);
 
-    // Create Agents table (UPDATED - with password field)
+    // Create Agents table
     await queryRunner.query(`
       CREATE TABLE "agents" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -84,7 +85,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       )
     `);
 
-    // Create Properties table (FIXED - using correct enum names)
+    // Create Properties table
     await queryRunner.query(`
       CREATE TABLE "properties" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -111,7 +112,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       )
     `);
 
-    // Create Conversations table (FIXED - using correct enum names)
+    // Create Conversations table
     await queryRunner.query(`
       CREATE TABLE "conversations" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -131,7 +132,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
       )
     `);
 
-    // Create Property Searches table (FIXED - using correct enum names)
+    // Create Property Searches table
     await queryRunner.query(`
       CREATE TABLE "property_searches" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -192,13 +193,13 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_results_count" ON "property_searches" ("results_count")`);
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_search_quality" ON "property_searches" ("search_quality")`);
 
-    console.log('✅ SettleSmart AI database schema created successfully!');
-    console.log('📊 Tables created: users, agents, properties, conversations, property_searches');
-    console.log('⚡ Indexes created for optimal performance');
-    console.log('🔐 Password authentication enabled for agents');
-    console.log('🇳🇬 Nigerian phone number support enabled');
-    console.log('📱 WhatsApp integration ready');
-    console.log('🤖 AI conversation tracking ready');
+    console.log('SettleSmart AI database schema created successfully!');
+    console.log('Tables created: users, agents, properties, conversations, property_searches');
+    console.log('Indexes created for optimal performance');
+    console.log('Password authentication enabled for agents');
+    console.log('Nigerian phone number support enabled');
+    console.log('WhatsApp integration ready');
+    console.log('AI conversation tracking ready');
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -1,4 +1,4 @@
-// File: src/modules/conversations/conversations.service.ts
+// File name: src/modules/conversations/conversations.service.ts
 
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConversationsRepository } from './conversations.repository';
@@ -24,9 +24,7 @@ export class ConversationsService {
         private readonly usersService: UsersService,
     ) { }
 
-    /**
-     * Create a new conversation or get existing active conversation
-     */
+    // Create a new conversation or get existing active conversation
     async createOrGetActiveConversation(
         createConversationDto: CreateConversationDto,
     ): Promise<Conversation> {
@@ -68,9 +66,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Find conversation by ID
-     */
+    // Find conversation by ID
     async findById(id: string): Promise<Conversation> {
         const conversation = await this.conversationsRepository.findById(id);
         if (!conversation) {
@@ -79,9 +75,7 @@ export class ConversationsService {
         return conversation;
     }
 
-    /**
-     * Find conversation by session ID
-     */
+    // Find conversation by session ID
     async findBySessionId(sessionId: string): Promise<Conversation> {
         const conversation = await this.conversationsRepository.findBySessionId(sessionId);
         if (!conversation) {
@@ -90,23 +84,17 @@ export class ConversationsService {
         return conversation;
     }
 
-    /**
-     * Find active conversation by user phone
-     */
+    // Find active conversation by user phone
     async findActiveByUserPhone(userPhone: string): Promise<Conversation | null> {
         return await this.conversationsRepository.findActiveByUserPhone(userPhone);
     }
 
-    /**
-     * Get conversation history for a user
-     */
+    // Get conversation history for a user
     async getUserConversationHistory(userPhone: string, limit: number = 10): Promise<Conversation[]> {
         return await this.conversationsRepository.findByUserPhone(userPhone, limit);
     }
 
-    /**
-     * Add message to conversation
-     */
+    // Add message to conversation
     async addMessage(conversationId: string, addMessageDto: AddMessageDto): Promise<Conversation> {
         const conversation = await this.findById(conversationId);
 
@@ -130,9 +118,7 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Add user message (convenience method for WhatsApp integration)
-     */
+    // Add user message (convenience method for WhatsApp integration)
     async addUserMessage(
         userPhone: string,
         content: string,
@@ -160,9 +146,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Add AI response message
-     */
+    // Add AI response message
     async addAIResponse(
         conversationId: string,
         content: string,
@@ -178,9 +162,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Update conversation context
-     */
+    // Update conversation context
     async updateContext(conversationId: string, updateContextDto: UpdateContextDto): Promise<Conversation> {
         const updatedConversation = await this.conversationsRepository.updateContext(
             conversationId,
@@ -194,9 +176,7 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Set conversation intent
-     */
+    // Set conversation intent
     async setIntent(conversationId: string, intent: string, stage?: string): Promise<Conversation> {
         return await this.updateContext(conversationId, {
             current_intent: intent,
@@ -204,9 +184,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Set search criteria in conversation context
-     */
+    // Set search criteria in conversation context
     async setSearchCriteria(
         conversationId: string,
         criteria: {
@@ -224,9 +202,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Record property recommendations in conversation
-     */
+    // Record property recommendations in conversation
     async recordPropertyRecommendations(
         conversationId: string,
         propertyIds: string[],
@@ -237,9 +213,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Record agent matching in conversation
-     */
+    // Record agent matching in conversation
     async recordAgentMatching(
         conversationId: string,
         agentIds: string[],
@@ -250,9 +224,7 @@ export class ConversationsService {
         });
     }
 
-    /**
-     * Mark conversation as waiting for user input
-     */
+    // Mark conversation as waiting for user input
     async markWaitingForUser(conversationId: string): Promise<Conversation> {
         const updatedConversation = await this.conversationsRepository.markWaitingForUser(conversationId);
         if (!updatedConversation) {
@@ -261,9 +233,7 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Mark conversation as completed
-     */
+    // Mark conversation as completed
     async markCompleted(conversationId: string, reason?: string): Promise<Conversation> {
         const updatedConversation = await this.conversationsRepository.markCompleted(conversationId, reason);
         if (!updatedConversation) {
@@ -272,9 +242,7 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Reactivate conversation
-     */
+    // Reactivate conversation
     async reactivate(conversationId: string): Promise<Conversation> {
         const updatedConversation = await this.conversationsRepository.reactivate(conversationId);
         if (!updatedConversation) {
@@ -283,30 +251,22 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Search conversations with filters
-     */
+    // Search conversations with filters
     async search(searchDto: ConversationSearchDto): Promise<PaginatedResponse<Conversation>> {
         return await this.conversationsRepository.search(searchDto);
     }
 
-    /**
-     * Get conversation statistics
-     */
+    // Get conversation statistics
     async getStats(statsDto: ConversationStatsDto): Promise<any> {
         return await this.conversationsRepository.getConversationStats(statsDto.days);
     }
 
-    /**
-     * Find stale conversations for cleanup
-     */
+    // Find stale conversations for cleanup
     async findStaleConversations(hours: number = 24): Promise<Conversation[]> {
         return await this.conversationsRepository.findStaleConversations(hours);
     }
 
-    /**
-     * Clean up abandoned conversations
-     */
+    // Clean up abandoned conversations
     async cleanupAbandonedConversations(hours: number = 48): Promise<number> {
         const staleConversations = await this.findStaleConversations(hours);
         let cleanedCount = 0;
@@ -321,38 +281,28 @@ export class ConversationsService {
         return cleanedCount;
     }
 
-    /**
-     * Get conversation summary for analytics
-     */
+    // Get conversation summary for analytics
     async getConversationSummary(conversationId: string): Promise<any> {
         const conversation = await this.findById(conversationId);
         return conversation.getConversationSummary();
     }
 
-    /**
-     * Get user conversation analytics
-     */
+    // Get user conversation analytics
     async getUserAnalytics(userPhone: string): Promise<any> {
         return await this.conversationsRepository.findForUserAnalytics(userPhone);
     }
 
-    /**
-     * Find conversations by intent (for analytics)
-     */
+    // Find conversations by intent (for analytics)
     async findByIntent(intent: string, limit: number = 50): Promise<Conversation[]> {
         return await this.conversationsRepository.findByIntent(intent, limit);
     }
 
-    /**
-     * Find conversations with property recommendations
-     */
+    // Find conversations with property recommendations
     async findWithPropertyRecommendations(): Promise<Conversation[]> {
         return await this.conversationsRepository.findWithPropertyRecommendations();
     }
 
-    /**
-     * Update conversation (general update method)
-     */
+    // Update conversation (general update method)
     async update(conversationId: string, updateDto: UpdateConversationDto): Promise<Conversation> {
         const updatedConversation = await this.conversationsRepository.update(conversationId, updateDto);
         if (!updatedConversation) {
@@ -361,9 +311,7 @@ export class ConversationsService {
         return updatedConversation;
     }
 
-    /**
-     * Delete conversation
-     */
+    // Delete conversation
     async delete(conversationId: string): Promise<void> {
         const conversation = await this.findById(conversationId);
         const deleted = await this.conversationsRepository.delete(conversationId);
@@ -373,11 +321,8 @@ export class ConversationsService {
     }
 
     /**
-     * WhatsApp Integration Helper Methods
-     */
-
-    /**
-     * Process incoming WhatsApp message
+     WhatsApp Integration Helper Methods
+     Process incoming WhatsApp message
      */
     async processWhatsAppMessage(
         userPhone: string,
@@ -414,16 +359,12 @@ export class ConversationsService {
         };
     }
 
-    /**
-     * Generate session ID helper
-     */
+    // Generate session ID helper
     generateSessionId(userPhone: string): string {
         return this.conversationsRepository.generateSessionId(userPhone);
     }
 
-    /**
-     * Health check for conversations
-     */
+    // Health check for conversations
     async healthCheck(): Promise<{
         total_conversations: number;
         active_conversations: number;
@@ -444,11 +385,8 @@ export class ConversationsService {
     }
 
     /**
-     * Advanced conversation management methods
-     */
-
-    /**
-     * Get conversations requiring attention (admin tool)
+     Advanced conversation management methods
+     Get conversations requiring attention (admin tool)
      */
     async getConversationsRequiringAttention(): Promise<{
         stale_conversations: Conversation[];
@@ -483,9 +421,7 @@ export class ConversationsService {
         };
     }
 
-    /**
-     * Bulk operations for admin management
-     */
+    // Bulk operations for admin management
     async bulkMarkCompleted(conversationIds: string[], reason?: string): Promise<{
         completed: number;
         failed: string[];
@@ -505,9 +441,7 @@ export class ConversationsService {
         return { completed, failed };
     }
 
-    /**
-     * Export conversation data for analytics
-     */
+    // Export conversation data for analytics
     async exportConversationData(filters?: {
         from_date?: string;
         to_date?: string;
@@ -537,9 +471,7 @@ export class ConversationsService {
         }));
     }
 
-    /**
-     * Get conversation insights for business intelligence
-     */
+    // Get conversation insights for business intelligence
     async getConversationInsights(days: number = 30): Promise<{
         conversation_volume: { date: string; count: number }[];
         completion_rate: number;
@@ -628,9 +560,7 @@ export class ConversationsService {
         };
     }
 
-    /**
-     * Conversation workflow management
-     */
+    // Conversation workflow management
     async processConversationWorkflow(
         conversationId: string,
         action: 'escalate_to_agent' | 'mark_successful' | 'request_feedback' | 'schedule_followup'
@@ -677,9 +607,7 @@ export class ConversationsService {
         }
     }
 
-    /**
-     * Message analysis and categorization
-     */
+    // Message analysis and categorization
     async analyzeMessage(conversationId: string, messageContent: string): Promise<{
         intent: string;
         confidence: number;

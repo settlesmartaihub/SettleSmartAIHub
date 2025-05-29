@@ -1,4 +1,5 @@
-// src/properties/dto/property-response.dto.ts
+// File name: src/properties/dto/property-response.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PropertyResponseDto {

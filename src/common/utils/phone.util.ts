@@ -31,7 +31,6 @@ export class PhoneUtil {
     }
 }
 
-
 export function normalizePhoneNumber(phone: string): string {
     // Remove all non-digit characters
     const cleaned = phone.replace(/\D/g, '');
@@ -60,9 +59,7 @@ export function normalizePhoneNumber(phone: string): string {
     return '+234' + cleaned;
 }
 
-/**
- * Validate Nigerian phone number
- */
+// Validate Nigerian phone number
 export function isValidNigerianPhone(phone: string): boolean {
     const normalized = normalizePhoneNumber(phone);
 
@@ -73,9 +70,7 @@ export function isValidNigerianPhone(phone: string): boolean {
     return nigerianPattern.test(normalized);
 }
 
-/**
- * Format phone number for display
- */
+// Format phone number for display
 export function formatPhoneNumber(phone: string): string {
     const normalized = normalizePhoneNumber(phone);
 
@@ -88,17 +83,13 @@ export function formatPhoneNumber(phone: string): string {
     return phone; // Return original if not Nigerian format
 }
 
-/**
- * Extract WhatsApp format from phone number
- */
+// Extract WhatsApp format from phone number
 export function toWhatsAppFormat(phone: string): string {
     const normalized = normalizePhoneNumber(phone);
     return 'whatsapp:' + normalized;
 }
 
-/**
- * Extract phone number from WhatsApp format
- */
+// Extract phone number from WhatsApp format
 export function fromWhatsAppFormat(whatsappNumber: string): string {
     if (whatsappNumber.startsWith('whatsapp:')) {
         return whatsappNumber.replace('whatsapp:', '');
@@ -106,9 +97,7 @@ export function fromWhatsAppFormat(whatsappNumber: string): string {
     return whatsappNumber;
 }
 
-/**
- * Get Nigerian network provider from phone number
- */
+// Get Nigerian network provider from phone number
 export function getNetworkProvider(phone: string): string {
     const normalized = normalizePhoneNumber(phone);
 

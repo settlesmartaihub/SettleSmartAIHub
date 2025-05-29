@@ -1,5 +1,4 @@
-
-// File: src/modules/agents/dto/agent-properties-filter.dto.ts
+// File name: src/modules/agents/dto/agent-properties-filter.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsNumber, IsEnum, Min } from 'class-validator';
