@@ -1,7 +1,7 @@
 // File name: src/users/dto/user-response.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { UserStatus } from '../../modules/users/entities/user.entity';
+import { UserStatus } from '../entities/user.entity';
 
 export class UserResponseDto {
     @ApiProperty({

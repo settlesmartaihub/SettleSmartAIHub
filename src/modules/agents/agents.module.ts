@@ -3,11 +3,23 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Agent } from './entities/agent.entity';
+import { AgentsController } from './agents.controller';
+import { AgentsService } from './agents.service';
 import { AgentsRepository } from './agents.repository';
 
+// Import the other modules that AgentsService depends on
+import { PropertiesModule } from '../properties/properties.module';
+import { UsersModule } from '../users/users.module';
+
 @Module({
-    imports: [TypeOrmModule.forFeature([Agent])],
-    providers: [AgentsRepository],
-    exports: [AgentsRepository],
+    imports: [
+        TypeOrmModule.forFeature([Agent]),
+        // Import modules containing services that AgentsService needs
+        PropertiesModule, // For PropertiesService
+        UsersModule,     // For UsersService
+    ],
+    controllers: [AgentsController],
+    providers: [AgentsService, AgentsRepository],
+    exports: [AgentsService, AgentsRepository],
 })
 export class AgentsModule { }

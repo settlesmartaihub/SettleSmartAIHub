@@ -7,15 +7,22 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between } from 'typeorm';
-import { User, UserStatus } from '../modules/users/entities/user.entity';
+
+// Entity imports
+import { User, UserStatus } from './entities/user.entity';
+
+// Update DTO imports
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SetBudgetDto } from './dto/set-budget.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { UserSearchDto } from './dto/user-search.dto';
 import { UserMatchCriteriaDto } from './dto/user-match-criteria.dto';
-import { formatNigerianPhone } from '../common/utils/phone.util';
-import { PaginatedResponse } from '../common/interfaces/response.interface';
+
+// Utility and interface imports
+import { formatNigerianPhone } from '../../common/utils/phone.util';
+import { PaginatedResponse } from '../../common/interfaces/response.interface';
+
 
 @Injectable()
 export class UsersService {
@@ -26,7 +33,7 @@ export class UsersService {
 
     // Create new user (WhatsApp auto-registration)
     async createUser(createUserDto: CreateUserDto): Promise<User> {
-        const { phone } = createUserDto;
+        const { phone_number: phone } = createUserDto;
 
         // Format and validate phone number
         const formattedPhone = formatNigerianPhone(phone);
@@ -74,7 +81,7 @@ export class UsersService {
 
         if (!user) {
             user = await this.createUser({
-                phone,
+                phone_number: phone,
                 name: name || `User ${phone.slice(-4)}`,
                 status: UserStatus.ACTIVE
             });
@@ -102,8 +109,8 @@ export class UsersService {
         const user = await this.findUserById(id);
 
         // Handle phone number update
-        if (updateUserDto.phone) {
-            const formattedPhone = formatNigerianPhone(updateUserDto.phone);
+        if (updateUserDto.phone_number) {
+            const formattedPhone = formatNigerianPhone(updateUserDto.phone_number);
             if (!formattedPhone) {
                 throw new BadRequestException('Invalid Nigerian phone number format');
             }
@@ -114,7 +121,7 @@ export class UsersService {
                 throw new ConflictException('Phone number already in use');
             }
 
-            updateUserDto.phone = formattedPhone;
+            updateUserDto.phone_number = formattedPhone;
         }
 
         Object.assign(user, updateUserDto);
@@ -125,7 +132,7 @@ export class UsersService {
     async setBudgetRange(id: string, setBudgetDto: SetBudgetDto): Promise<User> {
         const user = await this.findUserById(id);
 
-        const { minBudget, maxBudget } = setBudgetDto;
+        const { min_budget: minBudget, max_budget: maxBudget } = setBudgetDto;
 
         // Validate budget range
         if (minBudget >= maxBudget) {
@@ -192,12 +199,12 @@ export class UsersService {
             page = 1,
             limit = 10,
             name,
-            phone,
-            location,
+            phone_number: phone,
+            location_preference: location,
             status,
-            budgetMin,
-            budgetMax,
-            sortBy = 'createdAt',
+            budget_min: budgetMin,
+            budget_max: budgetMax,
+            sortBy = 'created_at',
             sortOrder = 'DESC'
         } = searchDto;
 
@@ -269,21 +276,21 @@ export class UsersService {
         }
 
         // Filter by budget range
-        if (criteria.minBudget && criteria.maxBudget) {
+        if (criteria.budget_range?.min && criteria.budget_range?.max) {
             query.andWhere(
-                '(user.budgetMin <= :maxBudget AND user.budgetMax >= :minBudget)',
+                '(user.budget_min <= :maxBudget AND user.budget_max >= :minBudget)',
                 {
-                    minBudget: criteria.minBudget,
-                    maxBudget: criteria.maxBudget
+                    minBudget: criteria.budget_range.min,
+                    maxBudget: criteria.budget_range.max
                 }
             );
         }
 
         // Filter by property preferences
-        if (criteria.propertyType) {
+        if (criteria.property_types && criteria.property_types.length > 0) {
             query.andWhere(
-                "user.preferences->>'propertyType' = :propertyType",
-                { propertyType: criteria.propertyType }
+                "user.preferences->>'propertyType' = ANY(:propertyTypes)",
+                { propertyTypes: criteria.property_types }
             );
         }
 

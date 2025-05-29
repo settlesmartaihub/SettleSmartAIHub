@@ -3,15 +3,15 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan } from 'typeorm';
-import { Agent, AgentSubscriptionTier, AgentStatus, AgentVerificationStatus } from '../modules/agents/entities/agent.entity';
-import { CreateAgentDto } from '../modules/agents/dto/create-agent.dto';
-import { UpdateAgentDto } from '../modules/agents/dto/update-agent.dto';
-import { VerifyAgentDto } from '../modules/agents/dto/verify-agent.dto';
-import { UpdateSubscriptionDto } from '../modules/agents/dto/update-subscription.dto';
-import { RateAgentDto } from '../modules/agents/dto/rate-agent.dto';
-import { AgentSearchDto } from '../modules/agents/dto/agent-search.dto';
-import { AgentPropertiesFilterDto } from '../modules/agents/dto/agent-properties-filter.dto';
-import { PaginatedResponse } from '../common/interfaces/response.interface';
+import { Agent, AgentSubscriptionTier, AgentStatus, AgentVerificationStatus } from './entities/agent.entity';
+import { CreateAgentDto } from './dto/create-agent.dto';
+import { UpdateAgentDto } from './dto/update-agent.dto';
+import { VerifyAgentDto } from './dto/verify-agent.dto';
+import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { RateAgentDto } from './dto/rate-agent.dto';
+import { AgentSearchDto } from './dto/agent-search.dto';
+import { AgentPropertiesFilterDto } from './dto/agent-properties-filter.dto';
+import { PaginatedResponse } from '../../common/interfaces/response.interface';
 import { PropertiesService } from '../properties/properties.service';
 import { UsersService } from '../users/users.service';
 

@@ -22,18 +22,18 @@ import {
     ApiQuery,
 } from '@nestjs/swagger';
 import { AgentsService } from './agents.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-import { CreateAgentDto } from '../modules/agents/dto/create-agent.dto';
-import { UpdateAgentDto } from '../modules/agents/dto/update-agent.dto';
-import { VerifyAgentDto } from '../modules/agents/dto/verify-agent.dto';
-import { UpdateSubscriptionDto } from '../modules/agents/dto/update-subscription.dto';
-import { RateAgentDto } from '../modules/agents/dto/rate-agent.dto';
-import { AgentSearchDto } from '../modules/agents/dto/agent-search.dto';
-import { AgentPropertiesFilterDto } from '../modules/agents/dto/agent-properties-filter.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { CreateAgentDto } from '../../modules/agents/dto/create-agent.dto';
+import { UpdateAgentDto } from '../../modules/agents/dto/update-agent.dto';
+import { VerifyAgentDto } from '../../modules/agents/dto/verify-agent.dto';
+import { UpdateSubscriptionDto } from '../../modules/agents/dto/update-subscription.dto';
+import { RateAgentDto } from '../../modules/agents/dto/rate-agent.dto';
+import { AgentSearchDto } from '../../modules/agents/dto/agent-search.dto';
+import { AgentPropertiesFilterDto } from '../../modules/agents/dto/agent-properties-filter.dto';
 
 @ApiTags('Agents')
 @Controller('agents')

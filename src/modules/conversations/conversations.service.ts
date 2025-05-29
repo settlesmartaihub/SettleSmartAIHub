@@ -15,7 +15,7 @@ import { AddMessageDto } from './dto/add-message.dto';
 import { UpdateContextDto } from './dto/update-context.dto';
 import { ConversationSearchDto, ConversationStatsDto } from './dto/conversation-search.dto';
 import { PaginatedResponse } from '../../common/interfaces/response.interface';
-import { UsersService } from '../../users/users.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ConversationsService {

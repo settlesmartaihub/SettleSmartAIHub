@@ -89,6 +89,26 @@ export class UserSearchDto {
     @Min(1)
     @Max(100)
     limit?: number = 10;
+
+    @ApiPropertyOptional({
+        description: 'Sort by field',
+        example: 'created_at',
+        enum: ['created_at', 'updated_at', 'name', 'budget_max'],
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    sortBy?: string;
+
+    @ApiPropertyOptional({
+        description: 'Sort order',
+        example: 'DESC',
+        enum: ['ASC', 'DESC'],
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    sortOrder?: 'ASC' | 'DESC';
 }
 
 export class SetBudgetDto {

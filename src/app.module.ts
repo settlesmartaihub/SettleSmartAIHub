@@ -13,9 +13,9 @@ import databaseConfig from './config/database.config';
 
 // Import all modules
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { AgentsModule } from './agents/agents.module';
-import { PropertiesModule } from './properties/properties.module';
+import { UsersModule } from './modules/users/users.module';
+import { AgentsModule } from './modules/agents/agents.module';
+import { PropertiesModule } from './modules/properties/properties.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
 import { PropertySearchesModule } from './modules/property-searches/property-searches.module';
 

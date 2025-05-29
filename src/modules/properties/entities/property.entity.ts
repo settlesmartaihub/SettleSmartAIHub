@@ -48,6 +48,7 @@ export interface PropertyAmenities {
 
 export interface PropertyLocation {
     area: string; // Specific area within Lugbe
+    address?: string; // Full address - ADD THIS LINE
     landmark?: string; // Nearby landmark
     coordinates?: {
         latitude: number;

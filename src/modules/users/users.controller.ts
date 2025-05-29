@@ -17,7 +17,9 @@ import {
     HttpStatus,
     ParseUUIDPipe,
     ValidationPipe,
-    UsePipes
+    UsePipes,
+    UseInterceptors,
+    NotFoundException
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -28,20 +30,24 @@ import {
     ApiBearerAuth,
     ApiBody
 } from '@nestjs/swagger';
+
+// Update service import
 import { UsersService } from './users.service';
+
+// DTO imports
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SetBudgetDto } from './dto/set-budget.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { UserSearchDto } from './dto/user-search.dto';
 import { UserMatchCriteriaDto } from './dto/user-match-criteria.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
-import { UseInterceptors } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common';
+
+// Common imports
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { ResponseInterceptor } from '../../common/interceptors/response.interceptor';
 
 @ApiTags('Users')
 @Controller('users')

@@ -6,7 +6,7 @@ import { Conversation } from './entities/conversation.entity';
 import { ConversationsRepository } from './conversations.repository';
 import { ConversationsService } from './conversations.service';
 import { ConversationsController } from './conversations.controller';
-import { UsersModule } from '../../users/users.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
     imports: [

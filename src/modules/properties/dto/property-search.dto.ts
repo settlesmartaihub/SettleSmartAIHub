@@ -178,6 +178,63 @@ export class PropertySearchDto {
     @Min(1)
     @Max(50)
     limit?: number = 10;
+
+    @ApiPropertyOptional({
+        description: 'Minimum price filter',
+        example: 200000,
+        required: false
+    })
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    minPrice?: number;
+
+    @ApiPropertyOptional({
+        description: 'Maximum price filter',
+        example: 1000000,
+        required: false
+    })
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    maxPrice?: number;
+
+    @ApiPropertyOptional({
+        description: 'Property type filter',
+        example: 'flat',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    propertyType?: string;
+
+    @ApiPropertyOptional({
+        description: 'Search radius in kilometers',
+        example: 10,
+        required: false
+    })
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    radius?: number;
+
+    @ApiPropertyOptional({
+        description: 'Sort by field',
+        example: 'created_at',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    sortBy?: string;
+
+    @ApiPropertyOptional({
+        description: 'Sort order',
+        example: 'DESC',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    sortOrder?: string;
 }
 
 export class PropertyMatchDto {
