@@ -1,4 +1,4 @@
-// src/auth/dto/register.dto.ts
+// File name: src/auth/dto/register.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
@@ -8,7 +8,7 @@ import { UserRole } from './login.dto';
 export class RegisterDto {
     @ApiProperty({
         description: 'Full name',
-        example: 'John Doe Real Estate'
+        example: 'MAX Real Estate'
     })
     @IsString()
     @MinLength(2, { message: 'Name must be at least 2 characters long' })
@@ -16,7 +16,7 @@ export class RegisterDto {
 
     @ApiProperty({
         description: 'Email address',
-        example: 'john@realestate.ng'
+        example: 'max@gmail.com'
     })
     @IsEmail({}, { message: 'Please provide a valid email address' })
     email: string;
@@ -39,7 +39,7 @@ export class RegisterDto {
 
     @ApiProperty({
         description: 'Business name (for agents)',
-        example: 'John Properties Limited',
+        example: 'Max Properties Limited',
         required: false
     })
     @IsOptional()

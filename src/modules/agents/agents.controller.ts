@@ -43,7 +43,7 @@ export class AgentsController {
     constructor(private readonly agentsService: AgentsService) { }
 
     @Post()
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN) // Only ADMINs can create agents
     @ApiOperation({
         summary: 'Create New Agent',
         description: 'Create a new real estate agent account (Admin only)',
@@ -71,11 +71,11 @@ export class AgentsController {
         }
     })
     async create(@Body() createAgentDto: CreateAgentDto) {
-        const result = await this.agentsService.create(createAgentDto);
+        const result = await this.agentsService.create(createAgentDto); // Pass DTO to service to create agent
         return {
             success: true,
             message: 'Agent created successfully',
-            data: result,
+            data: result, // Return the created agent data
         };
     }
 

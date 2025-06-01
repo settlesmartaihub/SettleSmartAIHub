@@ -1,4 +1,4 @@
-// Filename: src/auth/auth.service.ts
+// File name: src/auth/auth.service.ts
 
 import {
     Injectable,
@@ -16,6 +16,9 @@ import { Agent } from '../modules/agents/entities/agent.entity';
 import { LoginDto, RegisterDto, ChangePasswordDto, AuthResponseDto, UserRole } from './dto';
 import { hashPassword, comparePassword } from '../common/utils/encryption.util';
 import { normalizePhoneNumber } from '../common/utils/phone.util';
+
+// Use a valid UUID for admin
+const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +49,6 @@ export class AuthService {
                     where: { email },
                     select: ['id', 'email', 'name', 'phone_number', 'business_name', 'verification_status', 'status', 'password']
                 });
-
                 if (user) {
                     userRole = 'agent';
                 } else {
@@ -76,8 +78,8 @@ export class AuthService {
                     throw new UnauthorizedException('Invalid credentials');
                 }
             }
-            // For agents without password set, allow login for backward compatibility
 
+            // For agents without password set, allow login for backward compatibility
             // Check if user/agent is active
             if (user.status === 'inactive' || user.status === 'blocked' || user.status === 'suspended') {
                 throw new UnauthorizedException('Account is inactive or suspended');
@@ -142,11 +144,11 @@ export class AuthService {
                 total_leads: 0,
             };
 
-            // FIXED: Proper agent creation and saving
+            // Proper agent creation and saving
             const newAgent = this.agentRepository.create(agentData);
             const savedAgent = await this.agentRepository.save(newAgent);
 
-            // FIXED: Proper access to savedAgent properties
+            // Proper access to savedAgent properties
             const agentEmail = savedAgent.email || savedAgent.phone_number;
             const tokens = await this.generateTokens(savedAgent.id, agentEmail, 'agent');
 
@@ -248,6 +250,7 @@ export class AuthService {
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
+
                 return {
                     ...user,
                     phoneNumber: user.phone_number,
@@ -297,8 +300,8 @@ export class AuthService {
             return { ...user, role: 'user' };
         }
 
-        // Check if it's admin
-        if (userId === 'admin-user-id') {
+        // Check if it's admin - FIXED: Use the same UUID as in findOrCreateAdmin
+        if (userId === ADMIN_USER_ID) {
             return {
                 id: userId,
                 name: 'Admin User',
@@ -315,7 +318,7 @@ export class AuthService {
         const payload = { sub: userId, email, role };
 
         const accessToken = this.jwtService.sign(payload, {
-            expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '24h'),
+            expiresIn: this.configService.get('JWT_EXPIRES_IN', '24h'),
         });
 
         const refreshToken = this.jwtService.sign(payload, {
@@ -329,11 +332,12 @@ export class AuthService {
         };
     }
 
+    // Return admin with valid UUID
     private async findOrCreateAdmin(email: string) {
         // For demo purposes, create a default admin
         if (email === 'admin@settlesmart.ng' || email.includes('admin')) {
             return {
-                id: 'admin-user-id',
+                id: ADMIN_USER_ID, // FIXED: Now uses valid UUID
                 email: 'admin@settlesmart.ng',
                 password: await hashPassword('admin123'), // Default admin password
                 name: 'System Admin',
