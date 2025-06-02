@@ -79,7 +79,7 @@ export class ConversationsController {
     }
 
     @Get('search')
-    @Roles(UserRole.ADMIN, UserRole.AGENT)
+    @Roles(UserRole.ADMIN)
     @ApiOperation({
         summary: 'Search Conversations',
         description: 'Search conversations with filters and pagination',
@@ -198,7 +198,7 @@ export class ConversationsController {
     }
 
     @Get('user/:phone')
-    @Roles(UserRole.ADMIN, UserRole.AGENT)
+    @Roles(UserRole.ADMIN)
     @ApiOperation({
         summary: 'Get User Conversation History',
         description: 'Get conversation history for a specific user phone number',
@@ -269,7 +269,7 @@ export class ConversationsController {
     }
 
     @Get('active/:phone')
-    @Roles(UserRole.ADMIN, UserRole.AGENT)
+    @Roles(UserRole.ADMIN)
     @ApiOperation({
         summary: 'Get Active Conversation for User',
         description: 'Get currently active conversation for a user phone number',

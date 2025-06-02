@@ -1,0 +1,1236 @@
+// File name: src/services/ai-processing.service.ts
+
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ConversationContext } from '../modules/conversations/entities/conversation.entity';
+import OpenAI from 'openai';
+
+export interface AIResponse {
+    response: string;
+    action?: string;
+    confidence: number;
+    intent: string;
+    entities: Record<string, any>;
+    searchCriteria?: any;
+    budget?: { min: number; max: number };
+    location?: string;
+    agentId?: string;
+    metadata: {
+        processing_time_ms: number;
+        nlp_confidence: number;
+        suggested_actions: string[];
+        openai_used: boolean;
+        tokens_used?: number;
+    };
+}
+
+export interface ExtractedEntities {
+    budget_min?: number;
+    budget_max?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    property_type?: string;
+    location?: string;
+    amenities?: string[];
+    urgency?: 'low' | 'medium' | 'high';
+    move_in_date?: string;
+}
+
+interface OpenAIAnalysis {
+    intent: string;
+    confidence: number;
+    entities: ExtractedEntities;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    urgency: 'low' | 'medium' | 'high';
+    suggested_response: string;
+    follow_up_questions: string[];
+}
+
+@Injectable()
+export class AIProcessingService {
+    private readonly logger = new Logger(AIProcessingService.name);
+    private readonly openaiApiKey: string;
+    private readonly openaiClient: OpenAI | null;
+    private readonly openaiModel: string;
+    private readonly openaiMaxTokens: number;
+    private readonly openaiTemperature: number;
+
+    constructor(private readonly configService: ConfigService) {
+        this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY') || '';
+        this.openaiModel = this.configService.get<string>('OPENAI_MODEL') || 'gpt-3.5-turbo';
+        this.openaiMaxTokens = this.configService.get<number>('OPENAI_MAX_TOKENS') || 1000;
+        this.openaiTemperature = this.configService.get<number>('OPENAI_TEMPERATURE') || 0.7;
+
+        if (this.openaiApiKey) {
+            this.openaiClient = new OpenAI({
+                apiKey: this.openaiApiKey,
+            });
+            this.logger.log('OpenAI client initialized successfully');
+        } else {
+            this.openaiClient = null;
+            this.logger.warn('OpenAI API key not configured. Using rule-based processing.');
+        }
+    }
+
+    // Main method to process user messages
+    async processMessage(
+        userMessage: string,
+        conversationContext: ConversationContext,
+        userPhone: string,
+        isNewConversation: boolean = false
+    ): Promise<AIResponse> {
+        const startTime = Date.now();
+        let openaiUsed = false;
+        let tokensUsed = 0;
+
+        try {
+            let intent: string;
+            let entities: ExtractedEntities;
+            let confidence: number;
+            let suggestedResponse: string;
+
+            // Try OpenAI first, fallback to rule-based
+            if (this.openaiClient) {
+                try {
+                    const openaiAnalysis = await this.processWithOpenAI(userMessage, conversationContext);
+                    if (openaiAnalysis) {
+                        intent = openaiAnalysis.intent;
+                        entities = openaiAnalysis.entities;
+                        confidence = openaiAnalysis.confidence;
+                        suggestedResponse = openaiAnalysis.suggested_response;
+                        openaiUsed = true;
+                        tokensUsed = openaiAnalysis.tokens_used || 0;
+                        this.logger.log(`OpenAI processing successful - Intent: ${intent}, Confidence: ${confidence}`);
+                    } else {
+                        throw new Error('OpenAI returned null response');
+                    }
+                } catch (error) {
+                    this.logger.warn(`OpenAI processing failed, using fallback: ${error.message}`);
+                    // Fallback to rule-based processing
+                    intent = this.detectIntent(userMessage, conversationContext);
+                    entities = this.extractEntities(userMessage);
+                    confidence = 0.7; // Default confidence for rule-based
+                    suggestedResponse = '';
+                }
+            } else {
+                // Rule-based processing
+                intent = this.detectIntent(userMessage, conversationContext);
+                entities = this.extractEntities(userMessage);
+                confidence = 0.7;
+                suggestedResponse = '';
+            }
+
+            // Generate appropriate response (enhanced with OpenAI suggestions)
+            const response = await this.generateResponse(
+                intent,
+                entities,
+                userMessage,
+                conversationContext,
+                isNewConversation,
+                suggestedResponse
+            );
+
+            const processingTime = Date.now() - startTime;
+
+            return {
+                response: response.text,
+                action: response.action,
+                confidence,
+                intent,
+                entities,
+                searchCriteria: response.searchCriteria,
+                budget: response.budget,
+                location: response.location,
+                agentId: response.agentId,
+                metadata: {
+                    processing_time_ms: processingTime,
+                    nlp_confidence: confidence,
+                    suggested_actions: response.suggestedActions || [],
+                    openai_used: openaiUsed,
+                    tokens_used: tokensUsed,
+                },
+            };
+        } catch (error) {
+            this.logger.error(`Error processing message: ${error.message}`, error.stack);
+            return {
+                response: "I'm sorry, I encountered an issue processing your message. Could you please rephrase or try again?",
+                action: 'error_recovery',
+                confidence: 0.1,
+                intent: 'error',
+                entities: {},
+                metadata: {
+                    processing_time_ms: Date.now() - startTime,
+                    nlp_confidence: 0.1,
+                    suggested_actions: ['try_again', 'contact_support'],
+                    openai_used: false,
+                },
+            };
+        }
+    }
+
+    // OpenAI NLP Processing
+    private async processWithOpenAI(
+        message: string, 
+        context: ConversationContext
+    ): Promise<(OpenAIAnalysis & { tokens_used: number }) | null> {
+        if (!this.openaiClient) {
+            return null;
+        }
+
+        try {
+            const systemPrompt = this.buildSystemPrompt();
+            const userPrompt = this.buildUserPrompt(message, context);
+
+            const completion = await this.openaiClient.chat.completions.create({
+                model: this.openaiModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                max_tokens: this.openaiMaxTokens,
+                temperature: this.openaiTemperature,
+                response_format: { type: 'json_object' }
+            });
+
+            const responseContent = completion.choices[0]?.message?.content;
+            const tokensUsed = completion.usage?.total_tokens || 0;
+
+            if (!responseContent) {
+                throw new Error('No response content from OpenAI');
+            }
+
+            const analysis = JSON.parse(responseContent) as OpenAIAnalysis;
+            
+            // Validate and sanitize the response
+            const validatedAnalysis = this.validateOpenAIResponse(analysis);
+            
+            this.logger.log(`OpenAI tokens used: ${tokensUsed}`);
+            
+            return {
+                ...validatedAnalysis,
+                tokens_used: tokensUsed
+            };
+
+        } catch (error) {
+            this.logger.error(`OpenAI processing error: ${error.message}`);
+            return null;
+        }
+    }
+
+    // Build system prompt for OpenAI
+    private buildSystemPrompt(): string {
+        return `You are SettleSmart AI, an intelligent property assistant for Nigerian real estate, specifically focused on rental properties in Abuja areas like Lugbe, Kuje, and Gwagwalada.
+
+                CONTEXT: You help users find rental properties by understanding their needs and connecting them with verified agents.
+
+                INSTRUCTIONS:
+                1. Analyze user messages for intent, entities, and sentiment
+                2. Extract property search criteria (budget, bedrooms, location, etc.)
+                3. Provide helpful, friendly responses in Nigerian context
+                4. Always respond in JSON format as specified
+
+                INTENTS TO DETECT:
+                - greeting: Hello, hi, good morning, etc.
+                - property_search: Looking for house, flat, room, property
+                - budget_setting: Mentioning price range, budget, cost
+                - location_inquiry: Asking about areas, locations
+                - agent_contact: Want to speak to agent, get contact
+                - help_request: Need help, how does this work
+                - gratitude: Thank you, thanks, appreciate
+                - general_inquiry: Other questions
+
+                ENTITIES TO EXTRACT:
+                - budget_min/budget_max: Price ranges in Naira
+                - bedrooms: Number of bedrooms (1-10)
+                - bathrooms: Number of bathrooms (1-10)
+                - property_type: flat, house, room, self-contain
+                - location: Specific areas (Lugbe, Kuje, Gwagwalada, etc.)
+                - amenities: parking, security, power, water, generator, etc.
+                - urgency: How soon they need property (low/medium/high)
+                - move_in_date: When they want to move in
+
+                NIGERIAN CONTEXT:
+                - Currency: Nigerian Naira (₦)
+                - Common areas: Lugbe, Kuje, Gwagwalada, Kubwa, Nyanya
+                - Property types: Flat, House, Room, Self-contain
+                - Budget ranges: ₦200k-₦2M per month
+                - Common amenities: Parking, Security, Power, Water, Generator
+
+                RESPONSE STYLE:
+                - Friendly and helpful
+                - Use Nigerian English context
+                - Include relevant emojis
+                - Be specific about Abuja areas
+                - Mention SettleSmart AI when appropriate
+
+                Always respond in this exact JSON format:
+                {
+                "intent": "detected_intent",
+                "confidence": 0.85,
+                "entities": {
+                    "budget_min": 400000,
+                    "budget_max": 800000,
+                    "bedrooms": 2,
+                    "property_type": "flat",
+                    "location": "lugbe",
+                    "amenities": ["parking", "security"]
+                },
+                "sentiment": "positive",
+                "urgency": "medium",
+                "suggested_response": "Your helpful response here",
+                "follow_up_questions": ["What area do you prefer?", "What's your budget range?"]
+                }`;
+    }
+
+    // Build user prompt for OpenAI
+    private buildUserPrompt(message: string, context: ConversationContext): string {
+        let prompt = `USER MESSAGE: "${message}"\n\n`;
+        
+        if (context && Object.keys(context).length > 0) {
+            prompt += `CONVERSATION CONTEXT:\n`;
+            
+            if (context.current_intent) {
+                prompt += `- Current Intent: ${context.current_intent}\n`;
+            }
+            
+            if (context.conversation_stage) {
+                prompt += `- Conversation Stage: ${context.conversation_stage}\n`;
+            }
+            
+            if (context.search_criteria) {
+                prompt += `- Previous Search Criteria: ${JSON.stringify(context.search_criteria)}\n`;
+            }
+            
+            if (context.last_property_recommendations) {
+                prompt += `- Properties Shown: ${context.last_property_recommendations.length} properties\n`;
+            }
+            
+            if (context.matched_agents) {
+                prompt += `- Agents Matched: ${context.matched_agents.length} agents\n`;
+            }
+            
+            prompt += '\n';
+        }
+        
+        prompt += `Please analyze this message and provide a JSON response with intent detection, entity extraction, and a suggested response for a Nigerian property search assistant.`;
+        
+        return prompt;
+    }
+
+    // Validate OpenAI response
+    private validateOpenAIResponse(analysis: any): OpenAIAnalysis {
+        // Set defaults for required fields
+        const validated: OpenAIAnalysis = {
+            intent: analysis.intent || 'general_inquiry',
+            confidence: Math.min(Math.max(analysis.confidence || 0.5, 0), 1),
+            entities: analysis.entities || {},
+            sentiment: ['positive', 'negative', 'neutral'].includes(analysis.sentiment) 
+                ? analysis.sentiment : 'neutral',
+            urgency: ['low', 'medium', 'high'].includes(analysis.urgency) 
+                ? analysis.urgency : 'medium',
+            suggested_response: analysis.suggested_response || '',
+            follow_up_questions: Array.isArray(analysis.follow_up_questions) 
+                ? analysis.follow_up_questions : []
+        };
+
+        // Validate and convert budget values
+        if (analysis.entities?.budget_min) {
+            const budget = this.parseAmount(analysis.entities.budget_min.toString());
+            if (budget) validated.entities.budget_min = budget;
+        }
+        
+        if (analysis.entities?.budget_max) {
+            const budget = this.parseAmount(analysis.entities.budget_max.toString());
+            if (budget) validated.entities.budget_max = budget;
+        }
+
+        // Validate bedroom/bathroom counts
+        if (analysis.entities?.bedrooms) {
+            const bedrooms = parseInt(analysis.entities.bedrooms);
+            if (bedrooms >= 1 && bedrooms <= 10) {
+                validated.entities.bedrooms = bedrooms;
+            }
+        }
+
+        if (analysis.entities?.bathrooms) {
+            const bathrooms = parseInt(analysis.entities.bathrooms);
+            if (bathrooms >= 1 && bathrooms <= 10) {
+                validated.entities.bathrooms = bathrooms;
+            }
+        }
+
+        // Validate property type
+        const validPropertyTypes = ['flat', 'house', 'room', 'self-contain'];
+        if (analysis.entities?.property_type && validPropertyTypes.includes(analysis.entities.property_type)) {
+            validated.entities.property_type = analysis.entities.property_type;
+        }
+
+        // Validate location
+        if (analysis.entities?.location) {
+            validated.entities.location = analysis.entities.location.toLowerCase();
+        }
+
+        // Validate amenities
+        if (Array.isArray(analysis.entities?.amenities)) {
+            validated.entities.amenities = analysis.entities.amenities;
+        }
+
+        return validated;
+    }
+
+    // Enhanced response generation with OpenAI suggestions
+    private async generateResponse(
+        intent: string,
+        entities: ExtractedEntities,
+        originalMessage: string,
+        context: ConversationContext,
+        isNewConversation: boolean,
+        openaiSuggestion?: string
+    ): Promise<{
+        text: string;
+        action?: string;
+        confidence: number;
+        searchCriteria?: any;
+        budget?: { min: number; max: number };
+        location?: string;
+        agentId?: string;
+        suggestedActions?: string[];
+    }> {
+        // If we have an OpenAI suggestion and it's good, use it
+        if (openaiSuggestion && openaiSuggestion.trim().length > 20) {
+            const enhanced = this.enhanceOpenAIResponse(openaiSuggestion, intent, entities, context);
+            if (enhanced) {
+                return enhanced;
+            }
+        }
+
+        // Fallback to rule-based responses
+        switch (intent) {
+            case 'greeting':
+                return this.handleGreeting(isNewConversation);
+            case 'property_search':
+                return this.handlePropertySearch(entities, context);
+            case 'budget_setting':
+                return this.handleBudgetSetting(entities);
+            case 'location_inquiry':
+                return this.handleLocationInquiry(entities);
+            case 'agent_contact':
+                return this.handleAgentContact(context);
+            case 'help_request':
+                return this.handleHelpRequest();
+            case 'gratitude':
+                return this.handleGratitude();
+            default:
+                return this.handleGeneralInquiry(originalMessage, entities, context);
+        }
+    }
+
+    // Enhance OpenAI response with actions and metadata
+    private enhanceOpenAIResponse(
+        suggestion: string, 
+        intent: string, 
+        entities: ExtractedEntities, 
+        context: ConversationContext
+    ): any {
+        let action: string | undefined;
+        let searchCriteria: any | undefined;
+        let budget: { min: number; max: number } | undefined;
+        let suggestedActions: string[] = [];
+
+        // Determine actions based on intent and entities
+        switch (intent) {
+            case 'greeting':
+                action = 'welcome';
+                break;
+            case 'property_search':
+                action = 'search_properties';
+                searchCriteria = this.buildSearchCriteria(entities, context);
+                suggestedActions = ['search_properties'];
+                break;
+            case 'budget_setting':
+                action = 'set_budget';
+                if (entities.budget_min && entities.budget_max) {
+                    budget = { min: entities.budget_min, max: entities.budget_max };
+                }
+                suggestedActions = ['search_properties'];
+                break;
+            case 'location_inquiry':
+                action = 'set_location';
+                suggestedActions = ['search_properties'];
+                break;
+            case 'agent_contact':
+                action = 'contact_agent';
+                suggestedActions = ['find_agent'];
+                break;
+            case 'help_request':
+                action = 'show_help';
+                break;
+        }
+
+        return {
+            text: suggestion,
+            action,
+            confidence: 0.9, // High confidence for OpenAI responses
+            searchCriteria,
+            budget,
+            location: entities.location,
+            suggestedActions,
+        };
+    }
+
+    // Build search criteria from entities and context
+    private buildSearchCriteria(entities: ExtractedEntities, context: ConversationContext): any {
+        const criteria: any = {
+            page: 1,
+            limit: 10,
+        };
+
+        // Budget from entities or context
+        if (entities.budget_min || entities.budget_max) {
+            criteria.price_min = entities.budget_min;
+            criteria.price_max = entities.budget_max;
+        } else if (context.search_criteria?.budget_min) {
+            criteria.price_min = context.search_criteria.budget_min;
+            criteria.price_max = context.search_criteria.budget_max;
+        }
+
+        // Other criteria
+        if (entities.bedrooms) criteria.bedrooms = entities.bedrooms;
+        if (entities.bathrooms) criteria.bathrooms = entities.bathrooms;
+        if (entities.property_type) criteria.property_type = entities.property_type;
+        if (entities.location) criteria.location = entities.location;
+        if (entities.amenities?.length) criteria.amenities = entities.amenities;
+
+        return criteria;
+    }
+
+    // Rule-based intent detection (fallback)
+    private detectIntent(message: string, context: ConversationContext): string {
+        const lowerMessage = message.toLowerCase();
+
+        // Greeting patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'greetings'
+        ])) {
+            return 'greeting';
+        }
+
+        // Property search patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'find', 'search', 'looking for', 'need', 'want', 'show me', 'property', 'house', 'flat', 'room'
+        ])) {
+            return 'property_search';
+        }
+
+        // Budget setting patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'budget', 'price range', 'afford', 'cost', 'naira', '₦', 'thousand', 'million'
+        ])) {
+            return 'budget_setting';
+        }
+
+        // Location patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'location', 'area', 'lugbe', 'kuje', 'gwagwalada', 'kubwa', 'where', 'place'
+        ])) {
+            return 'location_inquiry';
+        }
+
+        // Agent contact patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'agent', 'contact', 'phone', 'call', 'speak to', 'talk to', 'connect'
+        ])) {
+            return 'agent_contact';
+        }
+
+        // Help patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'help', 'how', 'what can you', 'assist', 'support', 'guide'
+        ])) {
+            return 'help_request';
+        }
+
+        // Thank you patterns
+        if (this.matchesPatterns(lowerMessage, [
+            'thank', 'thanks', 'appreciate', 'grateful'
+        ])) {
+            return 'gratitude';
+        }
+
+        return 'general_inquiry';
+    }
+
+    // Rule-based entity extraction (fallback)
+    private extractEntities(message: string): ExtractedEntities {
+        const entities: ExtractedEntities = {};
+
+        // Extract budget/price information
+        const budgetMatches = this.extractBudget(message);
+        if (budgetMatches.min) entities.budget_min = budgetMatches.min;
+        if (budgetMatches.max) entities.budget_max = budgetMatches.max;
+
+        // Extract bedroom count
+        const bedrooms = this.extractBedrooms(message);
+        if (bedrooms) entities.bedrooms = bedrooms;
+
+        // Extract bathroom count
+        const bathrooms = this.extractBathrooms(message);
+        if (bathrooms) entities.bathrooms = bathrooms;
+
+        // Extract property type
+        const propertyType = this.extractPropertyType(message);
+        if (propertyType) entities.property_type = propertyType;
+
+        // Extract location
+        const location = this.extractLocation(message);
+        if (location) entities.location = location;
+
+        // Extract amenities
+        const amenities = this.extractAmenities(message);
+        if (amenities.length > 0) entities.amenities = amenities;
+
+        return entities;
+    }
+
+    // Response handlers for different intents (keep existing implementations)
+    private handleGreeting(isNewConversation: boolean): any {
+        if (isNewConversation) {
+            return {
+                text: `🏠 Hello! Welcome to SettleSmart AI, your intelligent property assistant for Nigeria!\n\nI can help you find rental properties in Abuja areas like Lugbe, Kuje, and Gwagwalada.\n\n*To get started, try:*\n• "I need a 2-bedroom flat in Lugbe under ₦800k"\n• "Show me houses with parking"\n• "What's my budget options?"\n\nWhat type of property are you looking for? 🤔`,
+                action: 'welcome',
+                confidence: 0.95,
+            };
+        } else {
+            return {
+                text: `Hello again! 👋 How can I help you with your property search today?`,
+                action: 'greeting',
+                confidence: 0.9,
+            };
+        }
+    }
+
+    private handlePropertySearch(entities: ExtractedEntities, context: ConversationContext): any {
+        const searchCriteria = this.buildSearchCriteria(entities, context);
+        const hasValidCriteria = Object.keys(searchCriteria).length > 2;
+
+        if (hasValidCriteria) {
+            return {
+                text: `🔍 Perfect! Let me search for properties matching your criteria...\n\n*Searching for:*\n${this.formatSearchCriteria(searchCriteria)}\n\nI'll show you the best matches in a moment! ⏳`,
+                action: 'search_properties',
+                confidence: 0.85,
+                searchCriteria,
+                suggestedActions: ['search_properties'],
+            };
+        } else {
+            return {
+                text: `I'd love to help you find the perfect property! 🏠\n\nTo give you the best results, could you please tell me:\n\n💰 Budget range: "₦400k to ₦800k per month"\n🏠 Property type: "2-bedroom flat" or "3-bedroom house"\n📍 Location: "Lugbe" or "Kuje"\n\nExample: "I need a 2-bedroom flat in Lugbe under ₦700k"`,
+                action: 'collect_search_criteria',
+                confidence: 0.7,
+                suggestedActions: ['show_budget_guide', 'show_locations'],
+            };
+        }
+    }
+
+    private handleBudgetSetting(entities: ExtractedEntities): any {
+        if (entities.budget_min && entities.budget_max) {
+            return {
+                text: `💰 Great! I've noted your budget range of ₦${entities.budget_min.toLocaleString()} to ₦${entities.budget_max.toLocaleString()} per month.\n\nThis budget range can get you:\n• 1-2 bedroom flats in Lugbe/Kuje\n• Self-contain apartments in prime areas\n• Houses in developing areas\n\nWould you like me to search for properties in this range?`,
+                action: 'set_budget',
+                confidence: 0.9,
+                budget: { min: entities.budget_min, max: entities.budget_max },
+                suggestedActions: ['search_properties'],
+            };
+        } else {
+            return {
+                text: `💰 I can help you set a realistic budget! \n\nPlease tell me your budget range like:\n• "₦300k to ₦600k per month"\n• "Under ₦800k monthly"\n• "Between ₦400k and ₦1 million"\n\nOr say "budget guide" to see typical prices in different areas! 📊`,
+                action: 'show_budget_guide',
+                confidence: 0.8,
+                suggestedActions: ['show_budget_guide'],
+            };
+        }
+    }
+
+    private handleLocationInquiry(entities: ExtractedEntities): any {
+        if (entities.location) {
+            return {
+                text: `📍 Excellent choice! ${entities.location} is a great area.\n\n*About ${entities.location}:*\n${this.getLocationInfo(entities.location)}\n\nWould you like me to show you available properties in ${entities.location}?`,
+                action: 'set_location',
+                confidence: 0.85,
+                location: entities.location,
+                suggestedActions: ['search_properties'],
+            };
+        } else {
+            return {
+                text: `📍 I can help you choose the perfect location! Here are popular areas:\n\n*Lugbe:* Modern developments, good infrastructure\n*Kuje:* Budget-friendly, growing area\n*Gwagwalada:* Spacious properties, family-friendly\n*Kubwa:* Established area, many amenities\n\nWhich area interests you? Or say "location guide" for detailed information! 🗺️`,
+                action: 'show_locations',
+                confidence: 0.8,
+                suggestedActions: ['show_locations'],
+            };
+        }
+    }
+
+    private handleAgentContact(context: ConversationContext): any {
+        return {
+            text: `👨‍💼 I'll connect you with a verified agent!\n\nOur agents are:\n✅ Verified and licensed\n⭐ Highly rated by users\n📱 Available via WhatsApp\n🏠 Experts in their areas\n\nLet me find the best agent for your needs...`,
+            action: 'contact_agent',
+            confidence: 0.8,
+            suggestedActions: ['find_agent'],
+        };
+    }
+
+    private handleHelpRequest(): any {
+        return {
+            text: `ℹ️ How SettleSmart AI Can Help You:\n\n🔍 Property Search: "Find 2-bedroom flat in Lugbe under ₦700k"\n💰 Budget Planning: "My budget is ₦500k to ₦800k"\n📍 Location Info: "Tell me about Kuje area"\n👨‍💼 Agent Contact: "Connect me with an agent"\n📊 Market Info: "What are typical prices in Lugbe?"\n\n*Quick Commands:*\n• "Budget guide" - See price ranges\n• "Locations" - View available areas\n• "Help" - Show this menu\n\nJust type naturally and I'll understand! 🤖`,
+            action: 'show_help',
+            confidence: 0.95,
+        };
+    }
+
+    private handleGratitude(): any {
+        const responses = [
+            "You're very welcome! 😊 I'm here to help you find your perfect home. Is there anything else you'd like to know?",
+            "My pleasure! 🏠 Finding the right property is important, and I'm happy to assist. What else can I help with?",
+            "Glad I could help! ✨ Feel free to ask if you need more property information or have other questions.",
+        ];
+        return {
+            text: responses[Math.floor(Math.random() * responses.length)],
+            action: 'acknowledge_thanks',
+            confidence: 0.9,
+        };
+    }
+
+    private handleGeneralInquiry(message: string, entities: ExtractedEntities, context: ConversationContext): any {
+        const hasPropertyTerms = this.matchesPatterns(message.toLowerCase(), [
+            'apartment', 'house', 'flat', 'room', 'property', 'rent', 'accommodation'
+        ]);
+
+        if (hasPropertyTerms) {
+            return {
+                text: `I understand you're interested in property! 🏠\n\nTo help you better, could you be more specific? For example:\n\n• "I need a 2-bedroom flat in Lugbe"\n• "Show me houses under ₦600k"\n• "What's available in Kuje area?"\n\nOr ask me anything about:\n📍 Locations and areas\n💰 Budget and pricing\n🏠 Property types\n👨‍💼 Connecting with agents`,
+                action: 'clarify_intent',
+                confidence: 0.6,
+                suggestedActions: ['show_help', 'show_locations'],
+            };
+        }
+
+        return {
+            text: `I want to make sure I understand you correctly! 🤔\n\nI specialize in helping you find rental properties in Abuja. I can help with:\n\n🔍 Property searches\n💰 Budget planning\n📍 Area information\n👨‍💼 Agent connections\n\nCould you tell me what you're looking for? Try something like "I need a flat in Lugbe" or "Help me find a house"! 🏠`,
+            action: 'request_clarification',
+            confidence: 0.5,
+            suggestedActions: ['show_help'],
+        };
+    }
+
+    // Helper methods (keep existing implementations)
+    private extractBudget(message: string): { min?: number; max?: number } {
+        const result: { min?: number; max?: number } = {};
+        const lowerMessage = message.toLowerCase();
+
+        // Pattern for "X to Y" or "X - Y"
+        const rangePattern = /(\d+(?:,\d+)*)\s*(?:k|thousand|naira|₦)?\s*(?:to|-)\s*(\d+(?:,\d+)*)\s*(?:k|thousand|naira|₦)?/i;
+        const rangeMatch = lowerMessage.match(rangePattern);
+        
+        if (rangeMatch) {
+            const min = this.parseAmount(rangeMatch[1]);
+            const max = this.parseAmount(rangeMatch[2]);
+            if (min && max) {
+                result.min = min;
+                result.max = max;
+                return result;
+            }
+        }
+
+        // Pattern for "under X" or "below X"
+        const underPattern = /(?:under|below|less than|maximum|max)\s*(?:₦|naira)?\s*(\d+(?:,\d+)*)\s*(?:k|thousand|naira|₦)?/i;
+        const underMatch = lowerMessage.match(underPattern);
+        if (underMatch) {
+            const max = this.parseAmount(underMatch[1]);
+            if (max) {
+                result.max = max;
+                return result;
+            }
+        }
+
+        // Pattern for "above X" or "over X"
+        const abovePattern = /(?:above|over|more than|minimum|min)\s*(?:₦|naira)?\s*(\d+(?:,\d+)*)\s*(?:k|thousand|naira|₦)?/i;
+        const aboveMatch = lowerMessage.match(abovePattern);
+        if (aboveMatch) {
+            const min = this.parseAmount(aboveMatch[1]);
+            if (min) {
+                result.min = min;
+                return result;
+            }
+        }
+
+        // Pattern for single amount (treat as max)
+        const singlePattern = /(?:₦|naira)?\s*(\d+(?:,\d+)*)\s*(?:k|thousand|naira|₦)/i;
+        const singleMatch = lowerMessage.match(singlePattern);
+        if (singleMatch) {
+            const amount = this.parseAmount(singleMatch[1]);
+            if (amount) {
+                // If it's a large amount, treat as max, otherwise might be min
+                if (amount >= 100000) {
+                    result.max = amount;
+                } else {
+                    result.min = amount;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private parseAmount(amountStr: string): number | null {
+        // Remove commas and convert to number
+        const cleanAmount = amountStr.replace(/,/g, '');
+        const number = parseInt(cleanAmount, 10);
+        if (isNaN(number)) return null;
+
+        // If the number is less than 10000, assume it's in thousands (e.g., "500" means "500k")
+        if (number < 10000) {
+            return number * 1000;
+        }
+        return number;
+    }
+
+    private extractBedrooms(message: string): number | null {
+        const bedroomPatterns = [
+            /(\d+)[\s-]*(?:bedroom|bed|br)\b/i,
+            /(\d+)[\s-]*(?:room|rooms)\b/i,
+            /\b(\d+)br\b/i,
+        ];
+
+        for (const pattern of bedroomPatterns) {
+            const match = message.match(pattern);
+            if (match) {
+                const count = parseInt(match[1], 10);
+                if (count >= 1 && count <= 10) {
+                    return count;
+                }
+            }
+        }
+        return null;
+    }
+
+    private extractBathrooms(message: string): number | null {
+        const bathroomPatterns = [
+            /(\d+)[\s-]*(?:bathroom|bath|ba)\b/i,
+            /\b(\d+)ba\b/i,
+        ];
+
+        for (const pattern of bathroomPatterns) {
+            const match = message.match(pattern);
+            if (match) {
+                const count = parseInt(match[1], 10);
+                if (count >= 1 && count <= 10) {
+                    return count;
+                }
+            }
+        }
+        return null;
+    }
+
+    private extractPropertyType(message: string): string | null {
+        const lowerMessage = message.toLowerCase();
+        const typeMapping = {
+            'flat': ['flat', 'apartment', 'unit'],
+            'house': ['house', 'bungalow', 'duplex', 'detached'],
+            'room': ['room', 'single room', 'one room'],
+            'self-contain': ['self-contain', 'self contain', 'selfcon', 'studio', 'bedsitter'],
+        };
+
+        for (const [type, patterns] of Object.entries(typeMapping)) {
+            for (const pattern of patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    return type;
+                }
+            }
+        }
+        return null;
+    }
+
+    private extractLocation(message: string): string | null {
+        const lowerMessage = message.toLowerCase();
+        // Known locations in Abuja
+        const locations = [
+            'lugbe', 'lugbe phase 1', 'lugbe phase 2', 'lugbe extension',
+            'kuje', 'kwali', 'gwagwalada', 'kubwa', 'nyanya', 'karu',
+            'garki', 'wuse', 'maitama', 'asokoro', 'gwarinpa',
+            'lokogoma', 'katampe', 'jahi', 'utako', 'gudu',
+        ];
+
+        for (const location of locations) {
+            if (lowerMessage.includes(location)) {
+                return location;
+            }
+        }
+
+        // Check for general area mentions
+        if (lowerMessage.includes('abuja') || lowerMessage.includes('fct')) {
+            return 'abuja';
+        }
+        return null;
+    }
+
+    private extractAmenities(message: string): string[] {
+        const lowerMessage = message.toLowerCase();
+        const amenities: string[] = [];
+
+        const amenityMapping = {
+            'parking': ['parking', 'car park', 'garage'],
+            'security': ['security', 'gate', 'gated', 'secure'],
+            'power': ['power', 'electricity', 'light', '24/7 power'],
+            'water': ['water', 'borehole', 'running water'],
+            'generator': ['generator', 'gen', 'backup power'],
+            'internet': ['internet', 'wifi', 'broadband'],
+            'aircon': ['ac', 'air condition', 'air conditioning', 'aircon'],
+            'furnished': ['furnished', 'furniture', 'fitted'],
+            'kitchen': ['kitchen', 'fitted kitchen'],
+            'balcony': ['balcony', 'terrace'],
+            'swimming_pool': ['pool', 'swimming pool'],
+            'gym': ['gym', 'fitness', 'gymnasium'],
+        };
+
+        for (const [amenity, patterns] of Object.entries(amenityMapping)) {
+            for (const pattern of patterns) {
+                if (lowerMessage.includes(pattern)) {
+                    amenities.push(amenity);
+                    break; // Avoid duplicates
+                }
+            }
+        }
+        return amenities;
+    }
+
+    private matchesPatterns(text: string, patterns: string[]): boolean {
+        return patterns.some(pattern => text.includes(pattern));
+    }
+
+    private formatSearchCriteria(criteria: any): string {
+        const parts: string[] = [];
+
+        if (criteria.price_min && criteria.price_max) {
+            parts.push(`💰 Budget: ₦${criteria.price_min.toLocaleString()} - ₦${criteria.price_max.toLocaleString()}`);
+        } else if (criteria.price_max) {
+            parts.push(`💰 Budget: Under ₦${criteria.price_max.toLocaleString()}`);
+        } else if (criteria.price_min) {
+            parts.push(`💰 Budget: From ₦${criteria.price_min.toLocaleString()}`);
+        }
+
+        if (criteria.bedrooms) {
+            parts.push(`🏠 ${criteria.bedrooms}-bedroom property`);
+        }
+
+        if (criteria.bathrooms) {
+            parts.push(`🚿 ${criteria.bathrooms} bathroom(s)`);
+        }
+
+        if (criteria.property_type) {
+            parts.push(`🏘️ Type: ${criteria.property_type}`);
+        }
+
+        if (criteria.location) {
+            parts.push(`📍 Location: ${criteria.location}`);
+        }
+
+        if (criteria.amenities && criteria.amenities.length > 0) {
+            parts.push(`✨ Amenities: ${criteria.amenities.join(', ')}`);
+        }
+
+        return parts.length > 0 ? parts.join('\n') : 'General property search';
+    }
+
+    private getLocationInfo(location: string): string {
+        const locationInfo = {
+            'lugbe': '• Growing residential area\n• Good road access to city center\n• Mix of flats and houses\n• Price range: ₦300k - ₦1.2M',
+            'lugbe phase 1': '• Established area with good infrastructure\n• Close to shopping centers\n• Mostly 2-3 bedroom flats\n• Price range: ₦400k - ₦800k',
+            'lugbe phase 2': '• Newer developments\n• Modern amenities\n• Good security\n• Price range: ₦500k - ₦1M',
+            'kuje': '• Budget-friendly area\n• Rapid development\n• Good for families\n• Price range: ₦200k - ₦600k',
+            'gwagwalada': '• University town\n• Spacious properties\n• Lower cost of living\n• Price range: ₦250k - ₦700k',
+            'kubwa': '• Well-established area\n• Good amenities and schools\n• Mix of property types\n• Price range: ₦400k - ₦1M',
+        };
+
+        return locationInfo[location.toLowerCase()] || '• Popular residential area\n• Good connectivity\n• Various property options available';
+    }
+
+    // Advanced analytics and insights
+    async getConversationInsights(messages: any[]): Promise<{
+        dominant_intent: string;
+        user_satisfaction: 'high' | 'medium' | 'low';
+        conversion_likelihood: number;
+        identified_pain_points: string[];
+        recommendations: string[];
+        openai_analysis?: any;
+    }> {
+        try {
+            const intents = messages.map(msg => this.detectIntent(msg.content, {}));
+            const sentiments = messages.map(msg => this.analyzeSentiment(msg.content));
+
+            // Find dominant intent
+            const intentCounts = intents.reduce((acc, intent) => {
+                acc[intent] = (acc[intent] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            const dominantIntent = Object.entries(intentCounts)
+                .sort(([, a], [, b]) => b - a)[0]?.[0] || 'general_inquiry';
+
+            // Assess user satisfaction
+            const positiveCount = sentiments.filter(s => s === 'positive').length;
+            const negativeCount = sentiments.filter(s => s === 'negative').length;
+
+            let userSatisfaction: 'high' | 'medium' | 'low';
+            if (positiveCount > negativeCount * 2) {
+                userSatisfaction = 'high';
+            } else if (negativeCount > positiveCount) {
+                userSatisfaction = 'low';
+            } else {
+                userSatisfaction = 'medium';
+            }
+
+            // Calculate conversion likelihood (0-100)
+            let conversionLikelihood = 50; // Base score
+            if (dominantIntent === 'property_search') conversionLikelihood += 20;
+            if (intents.includes('budget_setting')) conversionLikelihood += 15;
+            if (intents.includes('agent_contact')) conversionLikelihood += 25;
+            if (userSatisfaction === 'high') conversionLikelihood += 20;
+            if (userSatisfaction === 'low') conversionLikelihood -= 30;
+
+            conversionLikelihood = Math.max(0, Math.min(100, conversionLikelihood));
+
+            // Optional: Get OpenAI analysis for deeper insights
+            let openaiAnalysis;
+            if (this.openaiClient && messages.length > 0) {
+                try {
+                    const conversationSummary = messages.map(msg => msg.content).join('\n');
+                    openaiAnalysis = await this.analyzeConversationWithOpenAI(conversationSummary);
+                } catch (error) {
+                    this.logger.warn(`OpenAI conversation analysis failed: ${error.message}`);
+                }
+            }
+
+            return {
+                dominant_intent: dominantIntent,
+                user_satisfaction: userSatisfaction,
+                conversion_likelihood: conversionLikelihood,
+                identified_pain_points: this.identifyPainPoints(messages),
+                recommendations: this.generateRecommendations(dominantIntent, userSatisfaction),
+                openai_analysis: openaiAnalysis,
+            };
+        } catch (error) {
+            this.logger.error(`Error generating conversation insights: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // Analyze entire conversation with OpenAI for insights
+    private async analyzeConversationWithOpenAI(conversationText: string): Promise<any> {
+        if (!this.openaiClient) {
+            return null;
+        }
+
+        try {
+            const systemPrompt = `You are analyzing a property search conversation for business insights. 
+            Analyze the conversation and provide insights in JSON format about:
+            - User's true intent and motivation
+            - Property preferences and requirements
+            - Likelihood to convert (rent a property)
+            - Areas for improvement in service
+            - Suggested next actions`;
+
+            const completion = await this.openaiClient.chat.completions.create({
+                model: this.openaiModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: `Analyze this conversation:\n\n${conversationText}` }
+                ],
+                max_tokens: 500,
+                temperature: 0.3,
+                response_format: { type: 'json_object' }
+            });
+
+            const responseContent = completion.choices[0]?.message?.content;
+            return responseContent ? JSON.parse(responseContent) : null;
+
+        } catch (error) {
+            this.logger.error(`OpenAI conversation analysis error: ${error.message}`);
+            return null;
+        }
+    }
+
+    // Sentiment analysis
+    private analyzeSentiment(message: string): 'positive' | 'negative' | 'neutral' {
+        const lowerMessage = message.toLowerCase();
+        const positiveWords = [
+            'good', 'great', 'excellent', 'perfect', 'nice', 'amazing', 'wonderful',
+            'fantastic', 'awesome', 'brilliant', 'love', 'like', 'happy', 'satisfied'
+        ];
+        const negativeWords = [
+            'bad', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'dislike',
+            'disappointed', 'frustrated', 'angry', 'upset', 'poor', 'useless'
+        ];
+
+        const positiveCount = positiveWords.filter(word => lowerMessage.includes(word)).length;
+        const negativeCount = negativeWords.filter(word => lowerMessage.includes(word)).length;
+
+        if (positiveCount > negativeCount) return 'positive';
+        if (negativeCount > positiveCount) return 'negative';
+        return 'neutral';
+    }
+
+    private identifyPainPoints(messages: any[]): string[] {
+        const painPoints: string[] = [];
+        const commonIssues = {
+            'budget_concerns': ['expensive', 'costly', 'afford', 'budget', 'cheap'],
+            'location_issues': ['far', 'distance', 'transport', 'access', 'remote'],
+            'property_quality': ['condition', 'quality', 'maintenance', 'old', 'new'],
+            'agent_concerns': ['agent', 'reliable', 'trust', 'scam', 'fraud'],
+        };
+
+        const allMessageText = messages.map(msg => msg.content).join(' ').toLowerCase();
+        for (const [issue, keywords] of Object.entries(commonIssues)) {
+            if (keywords.some(keyword => allMessageText.includes(keyword))) {
+                painPoints.push(issue);
+            }
+        }
+        return painPoints;
+    }
+
+    private generateRecommendations(intent: string, satisfaction: string): string[] {
+        const recommendations: string[] = [];
+
+        if (satisfaction === 'low') {
+            recommendations.push('Follow up with customer service');
+            recommendations.push('Provide additional support resources');
+        }
+
+        if (intent === 'property_search') {
+            recommendations.push('Send property recommendations via WhatsApp');
+            recommendations.push('Connect with verified agents');
+        }
+
+        if (intent === 'budget_setting') {
+            recommendations.push('Provide budget planning resources');
+            recommendations.push('Show cost breakdown examples');
+        }
+
+        return recommendations;
+    }
+
+    // Validate extracted entities
+    private validateEntities(entities: ExtractedEntities): { isValid: boolean; errors: string[] } {
+        const errors: string[] = [];
+
+        if (entities.budget_min && entities.budget_max) {
+            if (entities.budget_min >= entities.budget_max) {
+                errors.push('Minimum budget should be less than maximum budget');
+            }
+            if (entities.budget_min < 50000) {
+                errors.push('Minimum budget seems too low for Nigerian rental market');
+            }
+            if (entities.budget_max > 10000000) {
+                errors.push('Maximum budget seems unusually high');
+            }
+        }
+
+        if (entities.bedrooms && (entities.bedrooms < 1 || entities.bedrooms > 10)) {
+            errors.push('Number of bedrooms should be between 1 and 10');
+        }
+
+        if (entities.bathrooms && (entities.bathrooms < 1 || entities.bathrooms > 10)) {
+            errors.push('Number of bathrooms should be between 1 and 10');
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors,
+        };
+    }
+
+    // Generate follow-up suggestions
+    private generateFollowUpSuggestions(intent: string, entities: ExtractedEntities): string[] {
+        const suggestions: string[] = [];
+
+        switch (intent) {
+            case 'property_search':
+                if (!entities.budget_min) suggestions.push('Set your budget range');
+                if (!entities.location) suggestions.push('Choose a preferred location');
+                if (!entities.bedrooms) suggestions.push('Specify number of bedrooms');
+                break;
+            case 'budget_setting':
+                suggestions.push('Search for properties in your budget');
+                suggestions.push('Get location recommendations');
+                break;
+            case 'location_inquiry':
+                suggestions.push('See available properties in this area');
+                suggestions.push('Compare with other locations');
+                break;
+        }
+
+        return suggestions;
+    }
+
+    // Context-aware response enhancement
+    private enhanceResponseWithContext(response: string, context: ConversationContext): string {
+        // Add personalization based on conversation history
+        if (context.search_criteria?.budget_min && context.search_criteria?.budget_max) {
+            response = response.replace(
+                /budget/gi,
+                `budget (₦${context.search_criteria.budget_min.toLocaleString()} - ₦${context.search_criteria.budget_max.toLocaleString()})`
+            );
+        }
+
+        if (context.search_criteria?.location_preference) {
+            response = response.replace(
+                /location/gi,
+                `location (${context.search_criteria.location_preference})`
+            );
+        }
+
+        return response;
+    }
+
+    // Public method to test OpenAI connection
+    async testOpenAIConnection(): Promise<{ connected: boolean; model: string; error?: string }> {
+        if (!this.openaiClient) {
+            return { connected: false, model: 'none', error: 'API key not configured' };
+        }
+
+        try {
+            const completion = await this.openaiClient.chat.completions.create({
+                model: this.openaiModel,
+                messages: [{ role: 'user', content: 'Hello, this is a connection test.' }],
+                max_tokens: 10,
+                temperature: 0
+            });
+
+            return {
+                connected: true,
+                model: this.openaiModel,
+            };
+        } catch (error) {
+            return {
+                connected: false,
+                model: this.openaiModel,
+                error: error.message,
+            };
+        }
+    }
+
+    // Get OpenAI usage statistics
+    async getOpenAIUsageStats(): Promise<{
+        total_tokens_used: number;
+        requests_made: number;
+        average_tokens_per_request: number;
+        model_used: string;
+    }> {
+        // In a real implementation, you'd track these stats
+        // For now, return mock data
+        return {
+            total_tokens_used: 0,
+            requests_made: 0,
+            average_tokens_per_request: 0,
+            model_used: this.openaiModel,
+        };
+    }
+}

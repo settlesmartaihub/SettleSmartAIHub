@@ -1,5 +1,4 @@
-// File name: src/modules/agents/dto/agent-search.dto.ts
-
+// File: src/modules/agents/dto/agent-search.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsOptional,
@@ -88,6 +87,19 @@ export class AgentSearchDto {
     min_rating?: number;
 
     @ApiPropertyOptional({
+        description: 'Maximum rating filter',
+        example: 5.0,
+        minimum: 0,
+        maximum: 5,
+    })
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    @Min(0)
+    @Max(5)
+    max_rating?: number;
+
+    @ApiPropertyOptional({
         description: 'Page number for pagination',
         example: 1,
         minimum: 1,
@@ -110,6 +122,26 @@ export class AgentSearchDto {
     @Min(1)
     @Max(100)
     limit?: number = 10;
+
+    @ApiPropertyOptional({
+        description: 'Sort by field',
+        example: 'created_at',
+        enum: ['created_at', 'updated_at', 'name', 'rating', 'total_ratings'],
+    })
+    @IsOptional()
+    @IsString()
+    @IsIn(['created_at', 'updated_at', 'name', 'rating', 'total_ratings'])
+    sort_by?: string = 'created_at';
+
+    @ApiPropertyOptional({
+        description: 'Sort order',
+        example: 'DESC',
+        enum: ['ASC', 'DESC'],
+    })
+    @IsOptional()
+    @IsString()
+    @IsIn(['ASC', 'DESC'])
+    sort_order?: 'ASC' | 'DESC' = 'DESC';
 }
 
 export class VerifyAgentDto {

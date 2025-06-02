@@ -55,6 +55,7 @@ import { ResponseInterceptor } from '../../common/interceptors/response.intercep
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
+    // MODIFY USER DETAILS/ ASK FOR NAME, PHONE AND LOCATION
     @Post()
     @ApiOperation({
         summary: 'Create new user',
