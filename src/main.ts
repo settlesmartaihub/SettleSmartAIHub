@@ -61,16 +61,16 @@ async function bootstrap() {
   // CRITICAL: Listen on all interfaces (0.0.0.0) for Render
   await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 SettleSmart AI Backend running on port: ${port}`);
-  console.log(`🌍 Environment: ${environment}`);
-  console.log(`📍 API Base URL: /${apiPrefix}`);
+  console.log(`SettleSmart AI Backend running on port: ${port}`);
+  console.log(`Environment: ${environment}`);
+  console.log(`API Base URL: /${apiPrefix}`);
   
   if (environment === 'development') {
-    console.log(`📚 API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
+    console.log(`API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
   }
 }
 
 bootstrap().catch(error => {
-  console.error('❌ Failed to start application:', error);
+  console.error('Failed to start application:', error);
   process.exit(1);
 });

@@ -13,8 +13,8 @@ if (!process.env.NODE_OPTIONS.includes('max-old-space-size')) {
 // Force disable TypeScript experimental features
 process.env.NODE_OPTIONS += ' --no-experimental-type-stripping';
 
-console.log('🚀 Starting SettleSmart AI Backend...');
-console.log('📝 Node Options:', process.env.NODE_OPTIONS);
+console.log('Starting SettleSmart AI Backend...');
+console.log('Node Options:', process.env.NODE_OPTIONS);
 
 // Import and run the main application
 require('./dist/main.js');
