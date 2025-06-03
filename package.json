@@ -1,14 +1,18 @@
 {
   "name": "settlesmart-backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "SettleSmart AI - Intelligent Property Matching API for Nigeria",
+  "author": "SettleSmart Team",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -34,7 +38,8 @@
     "typeorm:revert-migration": "npm run typeorm -- -d ./src/database/data-source.ts migration:revert",
     "db:drop": "npm run typeorm -- -d ./src/database/data-source.ts schema:drop",
     "db:create": "npm run typeorm -- -d ./src/database/data-source.ts schema:sync",
-    "db:seed": "ts-node -r tsconfig-paths/register ./src/database/seeds/index.ts"
+    "db:seed": "ts-node -r tsconfig-paths/register ./src/database/seeds/index.ts",
+    "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.1",

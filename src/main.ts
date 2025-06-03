@@ -14,19 +14,21 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Get configuration values with fallbacks
-  const port = configService.get<number>('app.port') || 3000;
+  // CRITICAL: Use Render's PORT environment variable or fallback to 3000
+  const port = process.env.PORT || configService.get<number>('app.port') || 3000;
   const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
-  const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['http://localhost:3000'];
-  const environment = configService.get<string>('app.environment') || 'development';
+  const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*']; // Allow all origins in production
+  const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
 
   // Set global prefix
   app.setGlobalPrefix(apiPrefix);
 
-  // Enable CORS
+  // Enable CORS with more permissive settings for production
   app.enableCors({
-    origin: corsOrigins,
+    origin: environment === 'production' ? true : corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Global pipes, filters, and interceptors
@@ -34,6 +36,7 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
+    disableErrorMessages: environment === 'production', // Hide detailed errors in production
   }));
 
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -55,12 +58,19 @@ async function bootstrap() {
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
-  await app.listen(port);
-  console.log(`SettleSmart AI Backend running on: http://localhost:${port}/${apiPrefix}`);
+  // CRITICAL: Listen on all interfaces (0.0.0.0) for Render
+  await app.listen(port, '0.0.0.0');
 
+  console.log(`🚀 SettleSmart AI Backend running on port: ${port}`);
+  console.log(`🌍 Environment: ${environment}`);
+  console.log(`📍 API Base URL: /${apiPrefix}`);
+  
   if (environment === 'development') {
-    console.log(`API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
+    console.log(`📚 API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
   }
 }
 
-bootstrap();
+bootstrap().catch(error => {
+  console.error('❌ Failed to start application:', error);
+  process.exit(1);
+});

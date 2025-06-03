@@ -10,18 +10,21 @@ export const validationSchema = Joi.object({
     PORT: Joi.number().port().default(3000),
     API_PREFIX: Joi.string().default('api/v1'),
 
-    // Database Configuration - Required
-    DATABASE_HOST: Joi.string().required(),
+    // Database Configuration - Made more flexible for different environments
+    DATABASE_HOST: Joi.string().default('localhost'),
     DATABASE_PORT: Joi.number().port().default(5432),
-    DATABASE_USERNAME: Joi.string().required(),
-    DATABASE_PASSWORD: Joi.string().required(),
-    DATABASE_NAME: Joi.string().required(),
+    DATABASE_USERNAME: Joi.string().default('postgres'),
+    DATABASE_PASSWORD: Joi.string().allow('').default(''),
+    DATABASE_NAME: Joi.string().default('settlesmart_db'),
+    DATABASE_URL: Joi.string().optional(), // For production (Render)
     DATABASE_SSL: Joi.boolean().default(false),
     DATABASE_SYNCHRONIZE: Joi.boolean().default(false),
+    DATABASE_MIGRATIONS_RUN: Joi.boolean().default(true),
     DATABASE_MAX_CONNECTIONS: Joi.number().min(1).max(500).default(100),
     DATABASE_MIN_CONNECTIONS: Joi.number().min(1).default(2),
     DATABASE_RETRY_ATTEMPTS: Joi.number().min(0).max(10).default(3),
     DATABASE_RETRY_DELAY: Joi.number().min(1000).default(3000),
+    DATABASE_TIMEZONE: Joi.string().default('UTC'),
 
     // JWT Configuration
     JWT_SECRET: Joi.string().min(8).default('your-super-secret-jwt-key-change-in-production'),
@@ -29,23 +32,41 @@ export const validationSchema = Joi.object({
     JWT_REFRESH_SECRET: Joi.string().min(8).default('your-refresh-secret-change-in-production'),
     JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
 
-    // Twilio Configuration - Very flexible for development
+    // Twilio Configuration - More flexible validation
     TWILIO_ACCOUNT_SID: Joi.string().optional().allow(''),
     TWILIO_AUTH_TOKEN: Joi.string().optional().allow(''),
     TWILIO_WHATSAPP_NUMBER: Joi.string().default('+14155238886'),
-    TWILIO_WEBHOOK_URL: Joi.string().uri().optional(),
-    TWILIO_STATUS_CALLBACK: Joi.string().uri().optional(),
+    TWILIO_SANDBOX_CODE: Joi.string().optional().allow(''),
+    // More flexible URI validation - allows localhost and any valid URL
+    TWILIO_WEBHOOK_URL: Joi.string()
+        .pattern(/^https?:\/\/.+/)
+        .optional()
+        .allow('')
+        .default('http://localhost:3000/api/v1/whatsapp/incoming'),
+    TWILIO_STATUS_CALLBACK: Joi.string()
+        .pattern(/^https?:\/\/.+/)
+        .optional()
+        .allow('')
+        .default('http://localhost:3000/api/v1/whatsapp/status'),
 
-    // OpenAI Configuration - Very flexible for development
+    // Webhook Security
+    SKIP_WEBHOOK_VALIDATION: Joi.boolean().default(true),
+    WHATSAPP_VERIFY_TOKEN: Joi.string().default('settlesmart_verify_token'),
+    WEBHOOK_SECRET: Joi.string().default('settlesmart-webhook-secret-2025'),
+
+    // OpenAI Configuration - More flexible
     OPENAI_API_KEY: Joi.string().optional().allow(''),
     OPENAI_MODEL: Joi.string().default('gpt-3.5-turbo'),
     OPENAI_MAX_TOKENS: Joi.number().min(1).max(4000).default(1000),
     OPENAI_TEMPERATURE: Joi.number().min(0).max(2).default(0.7),
     OPENAI_ORGANIZATION: Joi.string().optional().allow(''),
 
-    // Everything else optional
+    // Cohere - Optional
     COHERE_API_KEY: Joi.string().optional().allow(''),
     COHERE_MODEL: Joi.string().default('command-xlm-beta'),
+
+    // Google Maps - Optional
+    GOOGLE_MAPS_API_KEY: Joi.string().optional().allow(''),
 
     // Rate Limiting
     THROTTLE_TTL: Joi.number().min(1).max(3600).default(60),
@@ -55,6 +76,7 @@ export const validationSchema = Joi.object({
     // File Upload
     MAX_FILE_SIZE: Joi.number().min(1024).default(5242880),
     UPLOAD_PATH: Joi.string().default('./uploads'),
+    ALLOWED_IMAGE_TYPES: Joi.string().default('image/jpeg,image/png,image/webp'),
 
     // Email - Optional
     EMAIL_HOST: Joi.string().default('smtp.gmail.com'),
@@ -86,7 +108,7 @@ export const validationSchema = Joi.object({
     LOCKOUT_DURATION_MINUTES: Joi.number().min(5).max(60).default(15),
 
     // Logging
-    LOG_LEVEL: Joi.string().default('info'),
+    LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug', 'verbose').default('info'),
     LOG_FORMAT: Joi.string().default('combined'),
     LOG_DATE_PATTERN: Joi.string().default('YYYY-MM-DD'),
     LOG_MAX_SIZE: Joi.string().default('20m'),
@@ -107,8 +129,8 @@ export const validationSchema = Joi.object({
     ENABLE_ANALYTICS: Joi.boolean().default(true),
     ENABLE_IMAGE_RECOGNITION: Joi.boolean().default(false),
 
-    // CORS
-    CORS_ORIGINS: Joi.string().default('http://localhost:3000'),
+    // CORS - More flexible
+    CORS_ORIGINS: Joi.string().default('http://localhost:3000,http://localhost:3001'),
 
     // SSL/TLS - Optional
     DATABASE_CA_CERT: Joi.string().optional(),
@@ -125,10 +147,12 @@ export const validationSchema = Joi.object({
     SWAGGER_DESCRIPTION: Joi.string().default('Intelligent Property Matching API'),
     SWAGGER_VERSION: Joi.string().default('1.0.0'),
 
-    // Webhook
-    WEBHOOK_SECRET: Joi.string().optional(),
-
-    // Admin
+    // Admin - Optional
     ADMIN_EMAIL: Joi.string().email().optional(),
     ADMIN_PASSWORD: Joi.string().optional(),
+
+    // Image Processing
+    IMAGE_QUALITY: Joi.number().min(1).max(100).default(80),
+    THUMBNAIL_WIDTH: Joi.number().min(50).max(1000).default(300),
+    THUMBNAIL_HEIGHT: Joi.number().min(50).max(1000).default(200),
 });
