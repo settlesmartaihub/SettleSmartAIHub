@@ -48,7 +48,8 @@ async function bootstrap() {
   );
 
   app.use('/public', express.static(join(__dirname, '..', 'public')));
-  app.use(favicon(join(__dirname, '..', 'public', 'logo.svg')));
+  // app.use(favicon(join(__dirname, '..', 'public', 'logo.svg')));
+  app.use(favicon(join(__dirname, '..', 'public', 'favicon.ico'))); 
 
   // Swagger Documentation (only in development)
   if (environment === 'development') {
