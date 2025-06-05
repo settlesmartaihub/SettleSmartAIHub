@@ -7,23 +7,33 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) { }
 
-  // Root route to handle Render's health checks
+  // Root route - handles both Render health checks and provides API info
   @Get()
   @ApiOperation({
-    summary: 'Root Health Check',
-    description: 'Root endpoint for health checks and basic API status'
+    summary: 'Root Endpoint',
+    description: 'Root endpoint that provides basic API information and status'
   })
   @ApiResponse({
     status: 200,
-    description: 'API is healthy and running'
+    description: 'API information and status'
   })
   getRoot(): any {
     return {
       message: 'SettleSmart AI - Your Smart Way Home in Nigeria!',
       status: 'healthy',
       api_version: '1.0.0',
-      api_docs: '/api/v1/docs',
-      api_base: '/api/v1'
+      api_base: '/api/v1',
+      endpoints: {
+        health: '/api/v1/health',
+        info: '/api/v1/info',
+        auth: '/api/v1/auth',
+        users: '/api/v1/users',
+        agents: '/api/v1/agents',
+        properties: '/api/v1/properties',
+        conversations: '/api/v1/conversations',
+        whatsapp: '/api/v1/whatsapp'
+      },
+      timestamp: new Date().toISOString()
     };
   }
 

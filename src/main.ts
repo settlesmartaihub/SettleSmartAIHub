@@ -1,5 +1,3 @@
-// File name: src/main.ts
-
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -15,17 +13,12 @@ import favicon from 'serve-favicon';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-
+  
   // Get configuration values with fallbacks
-  // CRITICAL: Use Render's PORT environment variable or fallback to 3000
   const port = process.env.PORT || configService.get<number>('app.port') || 3000;
   const apiPrefix = "api/v1";
-  const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*']; // Allow all origins in production
+  const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*'];
   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
-
-  // Set global prefix
-  // app.setGlobalPrefix(apiPrefix);
-  app.setGlobalPrefix('api/v1');
 
   // Enable CORS with more permissive settings for production
   app.enableCors({
@@ -40,18 +33,32 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    disableErrorMessages: environment === 'production', // Hide detailed errors in production
+    disableErrorMessages: environment === 'production',
   }));
-
+  
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
     new ResponseInterceptor(),
   );
 
+  // Static file serving
   app.use('/public', express.static(join(__dirname, '..', 'public')));
-  // app.use(favicon(join(__dirname, '..', 'public', 'logo.svg')));
   app.use(favicon(join(__dirname, '..', 'public', 'favicon.ico')));
+
+  // Add a global root route handler for Render health checks BEFORE setting prefix
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.get('/', (req, res) => {
+    res.json({
+      message: 'SettleSmart AI Backend - Health Check OK',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      api_base: '/api/v1'
+    });
+  });
+
+  // Set global prefix AFTER adding root route
+  app.setGlobalPrefix(apiPrefix);
 
   // Swagger Documentation (only in development)
   if (environment === 'development') {
@@ -61,18 +68,18 @@ async function bootstrap() {
       .setVersion(configService.get<string>('SWAGGER_VERSION') || '1.0.0')
       .addBearerAuth()
       .build();
-
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
-  // CRITICAL: Listen on all interfaces (0.0.0.0) for Render
+  // Listen on all interfaces for Render
   await app.listen(port, '0.0.0.0');
-
+  
   console.log(`SettleSmart AI Backend running on port: ${port}`);
   console.log(`Environment: ${environment}`);
   console.log(`API Base URL: /${apiPrefix}`);
-
+  console.log(`Root health check: /`);
+  
   if (environment === 'development') {
     console.log(`API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
   }
