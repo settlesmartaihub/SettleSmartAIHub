@@ -1,42 +1,29 @@
-// File name: src/app.controller.ts
-
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './app.service';
-import { ApiResponseDto } from './common/dto/api-response.dto';
 
 @ApiTags('App')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) { }
 
-  @Get()
-  getRoot(): string {
-      return 'Welcome to SettleSmart AI Backend!';
-  }
-
+  // Root route to handle Render's health checks
   @Get()
   @ApiOperation({
-    summary: 'Health Check',
-    description: 'Basic health check endpoint to verify API is running'
+    summary: 'Root Health Check',
+    description: 'Root endpoint for health checks and basic API status'
   })
   @ApiResponse({
     status: 200,
-    description: 'API is healthy and running',
-    schema: {
-      example: {
-        success: true,
-        message: 'SettleSmart AI API is running successfully',
-        data: 'Hello from SettleSmart AI - Your Smart Way Home in Nigeria!',
-        timestamp: '2025-01-25T10:30:00Z'
-      }
-    }
+    description: 'API is healthy and running'
   })
-  getHello(): { message: string; status: string; api_version: string } {
+  getRoot(): any {
     return {
       message: 'SettleSmart AI - Your Smart Way Home in Nigeria!',
       status: 'healthy',
-      api_version: '1.0.0'
+      api_version: '1.0.0',
+      api_docs: '/api/v1/docs',
+      api_base: '/api/v1'
     };
   }
 
@@ -47,26 +34,7 @@ export class AppController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Detailed health information',
-    schema: {
-      example: {
-        success: true,
-        message: 'All systems operational',
-        data: {
-          status: 'healthy',
-          timestamp: '2025-01-25T10:30:00Z',
-          database: 'connected',
-          services: {
-            whatsapp: 'ready',
-            ai: 'ready',
-            property_matching: 'ready'
-          },
-          location: 'Lugbe, Abuja',
-          features: ['property_search', 'agent_matching', 'whatsapp_integration']
-        },
-        timestamp: '2025-01-25T10:30:00Z'
-      }
-    }
+    description: 'Detailed health information'
   })
   getHealthCheck(): any {
     return {
@@ -91,34 +59,7 @@ export class AppController {
   })
   @ApiResponse({
     status: 200,
-    description: 'API information and capabilities',
-    schema: {
-      example: {
-        success: true,
-        message: 'API information retrieved',
-        data: {
-          name: 'SettleSmart AI API',
-          description: 'Intelligent Property Matching for Nigeria',
-          version: '1.0.0',
-          target_market: 'Nigerian rental property seekers',
-          primary_location: 'Lugbe, Abuja',
-          supported_languages: ['English'],
-          features: [
-            'WhatsApp Integration',
-            'AI-Powered Property Matching',
-            'Nigerian Phone Number Support',
-            'Agent Subscription Tiers',
-            'Property Search Analytics'
-          ],
-          property_types: ['flat', 'house', 'room', 'self-contain'],
-          subscription_tiers: {
-            basic: { listings: 5, price: 'Free' },
-            premium: { listings: 50, price: 'Paid' }
-          }
-        },
-        timestamp: '2025-01-25T10:30:00Z'
-      }
-    }
+    description: 'API information and capabilities'
   })
   getApiInfo(): any {
     return {
