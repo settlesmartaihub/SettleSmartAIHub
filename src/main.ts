@@ -10,7 +10,8 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { join } from 'path';
 import * as express from 'express';
-import * as favicon from 'serve-favicon';
+import favicon from 'serve-favicon';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
@@ -49,7 +50,7 @@ async function bootstrap() {
 
   app.use('/public', express.static(join(__dirname, '..', 'public')));
   // app.use(favicon(join(__dirname, '..', 'public', 'logo.svg')));
-  app.use(favicon(join(__dirname, '..', 'public', 'favicon.ico'))); 
+  app.use(favicon(join(__dirname, '..', 'public', 'favicon.ico')));
 
   // Swagger Documentation (only in development)
   if (environment === 'development') {
@@ -70,7 +71,7 @@ async function bootstrap() {
   console.log(`SettleSmart AI Backend running on port: ${port}`);
   console.log(`Environment: ${environment}`);
   console.log(`API Base URL: /${apiPrefix}`);
-  
+
   if (environment === 'development') {
     console.log(`API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
   }
