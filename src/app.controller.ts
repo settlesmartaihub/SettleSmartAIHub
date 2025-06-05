@@ -11,6 +11,11 @@ export class AppController {
   constructor(private readonly appService: AppService) { }
 
   @Get()
+  getRoot(): string {
+      return 'Welcome to SettleSmart AI Backend!';
+  }
+
+  @Get()
   @ApiOperation({
     summary: 'Health Check',
     description: 'Basic health check endpoint to verify API is running'
