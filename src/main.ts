@@ -8,7 +8,9 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-
+import { join } from 'path';
+import * as express from 'express';
+import * as favicon from 'serve-favicon';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
@@ -44,6 +46,9 @@ async function bootstrap() {
     new LoggingInterceptor(),
     new ResponseInterceptor(),
   );
+
+  app.use('/public', express.static(join(__dirname, '..', 'public')));
+  app.use(favicon(join(__dirname, '..', 'public', 'logo.svg')));
 
   // Swagger Documentation (only in development)
   if (environment === 'development') {
