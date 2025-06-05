@@ -19,12 +19,13 @@ async function bootstrap() {
   // Get configuration values with fallbacks
   // CRITICAL: Use Render's PORT environment variable or fallback to 3000
   const port = process.env.PORT || configService.get<number>('app.port') || 3000;
-  const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
+  const apiPrefix = "api/v1";
   const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*']; // Allow all origins in production
   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
 
   // Set global prefix
-  app.setGlobalPrefix(apiPrefix);
+  // app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix('api/v1');
 
   // Enable CORS with more permissive settings for production
   app.enableCors({
