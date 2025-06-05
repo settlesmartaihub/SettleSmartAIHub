@@ -5,6 +5,19 @@ import * as multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 
+// Define interface locally to avoid Express dependency issues
+interface MulterFile {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    destination: string;
+    filename: string;
+    path: string;
+    buffer: Buffer;
+}
+
 export class FileUploadUtil {
     static createMulterOptions(destination: string, maxSize = 5 * 1024 * 1024) {
         return {
@@ -35,7 +48,7 @@ export class FileUploadUtil {
         };
     }
 
-    static validateImageFile(file: Express.Multer.File): void {
+    static validateImageFile(file: MulterFile): void {
         const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
         if (!allowedMimes.includes(file.mimetype)) {
             throw new BadRequestException('Invalid file type. Only JPEG, PNG, and WebP are allowed');

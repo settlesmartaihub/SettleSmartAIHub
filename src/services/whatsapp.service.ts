@@ -3,7 +3,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // Import the Twilio SDK
-import * as twilio from 'twilio';
+import twilio from 'twilio';
 // Import other services
 import { ConversationsService } from '../modules/conversations/conversations.service';
 import { UsersService } from '../modules/users/users.service';

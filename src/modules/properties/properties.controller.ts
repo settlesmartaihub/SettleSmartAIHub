@@ -1,5 +1,3 @@
-// File name: src/properties/properties.controller.ts
-
 import {
     Controller,
     Get,
@@ -28,9 +26,11 @@ import {
     ApiConsumes
 } from '@nestjs/swagger';
 
+// Use Express.Multer.File type instead of custom interface
+import { Express } from 'express';
+
 // Update service import
 import { PropertiesService } from './properties.service';
-
 // Update DTO imports
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -38,7 +38,6 @@ import { PropertySearchDto } from './dto/property-search.dto';
 import { PropertyMatchDto } from './dto/property-match.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { UploadImagesDto } from './dto/upload-images.dto';
-
 // Update common imports
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -91,7 +90,7 @@ export class PropertiesController {
             }
         }
     })
-    async createProperty(@Request() req, @Body() createPropertyDto: CreatePropertyDto) {
+    async createProperty(@Request() req: any, @Body() createPropertyDto: CreatePropertyDto) {
         const agentId = req.user.id;
         return await this.propertiesService.createProperty(agentId, createPropertyDto);
     }
@@ -122,30 +121,7 @@ export class PropertiesController {
     @ApiBody({ type: PropertySearchDto })
     @ApiResponse({
         status: HttpStatus.OK,
-        description: 'Property search completed successfully',
-        schema: {
-            example: {
-                success: true,
-                data: [
-                    {
-                        id: 'property-uuid',
-                        title: '2-Bedroom Flat in Lugbe',
-                        price: 750000,
-                        bedrooms: 2,
-                        location: { area: 'Lugbe', state: 'FCT' },
-                        agent: { name: 'John Properties', phone: '+2348123456789' }
-                    }
-                ],
-                meta: {
-                    total: 25,
-                    page: 1,
-                    limit: 10,
-                    totalPages: 3,
-                    hasNext: true,
-                    hasPrev: false
-                }
-            }
-        }
+        description: 'Property search completed successfully'
     })
     async searchProperties(@Body() searchDto: PropertySearchDto) {
         return await this.propertiesService.searchProperties(searchDto);
@@ -159,21 +135,7 @@ export class PropertiesController {
     @ApiBody({ type: PropertyMatchDto })
     @ApiResponse({
         status: HttpStatus.OK,
-        description: 'Property matching completed successfully',
-        schema: {
-            example: {
-                success: true,
-                data: [
-                    {
-                        id: 'property-uuid',
-                        title: 'Perfect 2BR for You in Lugbe',
-                        price: 650000,
-                        matchScore: 0.95,
-                        reasons: ['Within your budget range', 'In your preferred area', 'Has your preferred amenities']
-                    }
-                ]
-            }
-        }
+        description: 'Property matching completed successfully'
     })
     async matchProperties(@Body() matchDto: PropertyMatchDto) {
         return await this.propertiesService.matchPropertiesForUser(matchDto.userPhone);
@@ -189,27 +151,7 @@ export class PropertiesController {
     })
     @ApiResponse({
         status: HttpStatus.OK,
-        description: 'Analytics retrieved successfully',
-        schema: {
-            example: {
-                success: true,
-                data: {
-                    totalProperties: 150,
-                    availableProperties: 120,
-                    rentedProperties: 30,
-                    occupancyRate: '20.00',
-                    propertyTypeDistribution: [
-                        { type: 'flat', count: 80 },
-                        { type: 'house', count: 50 },
-                        { type: 'room', count: 20 }
-                    ],
-                    popularAreas: [
-                        { area: 'Lugbe', count: 45, averagePrice: 750000 },
-                        { area: 'Kuje', count: 30, averagePrice: 650000 }
-                    ]
-                }
-            }
-        }
+        description: 'Analytics retrieved successfully'
     })
     async getPropertyAnalytics() {
         return await this.propertiesService.getPropertyAnalytics();
@@ -279,7 +221,7 @@ export class PropertiesController {
     })
     async updateProperty(
         @Param('id', ParseUUIDPipe) id: string,
-        @Request() req,
+        @Request() req: any,
         @Body() updatePropertyDto: UpdatePropertyDto
     ) {
         const agentId = req.user.id;
@@ -309,7 +251,7 @@ export class PropertiesController {
     })
     async updatePropertyStatus(
         @Param('id', ParseUUIDPipe) id: string,
-        @Request() req,
+        @Request() req: any,
         @Body('status') status: string
     ) {
         const agentId = req.user.id;
@@ -346,18 +288,15 @@ export class PropertiesController {
     })
     async uploadPropertyImages(
         @Param('id', ParseUUIDPipe) id: string,
-        @Request() req,
+        @Request() req: any,
         @UploadedFiles() files: Express.Multer.File[]
     ) {
         const agentId = req.user.id;
-
         // Validate files
         files.forEach(file => FileUploadUtil.validateImageFile(file));
-
         // Generate image URLs
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const imageUrls = files.map(file => FileUploadUtil.generateImageUrl(file.filename, baseUrl));
-
         return await this.propertiesService.uploadPropertyImages(id, agentId, imageUrls);
     }
 
@@ -374,7 +313,7 @@ export class PropertiesController {
         status: HttpStatus.OK,
         description: 'Property deleted successfully'
     })
-    async deleteProperty(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    async deleteProperty(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
         const agentId = req.user.id;
         await this.propertiesService.deleteProperty(id, agentId);
         return { message: 'Property deleted successfully' };
