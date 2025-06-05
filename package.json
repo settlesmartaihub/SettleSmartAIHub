@@ -29,6 +29,7 @@
     "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {
+    "@nestjs/cli": "^11.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -56,10 +57,10 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "twilio": "^5.6.1",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.24",
+    "typescript": "^5.7.3"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.1.1",
     "@types/bcryptjs": "^2.4.6",
@@ -80,8 +81,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typeorm-ts-node-commonjs": "^0.3.20",
-    "typescript": "^5.7.3"
+    "typeorm-ts-node-commonjs": "^0.3.20"
   },
   "jest": {
     "moduleFileExtensions": ["js", "json", "ts"],
