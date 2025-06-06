@@ -37,7 +37,7 @@ export class WhatsAppController {
 
     constructor(
         private readonly whatsAppService: WhatsAppService,
-        private readonly aiProcessingService: AIProcessingService, // ADD THIS LINE
+        private readonly aiProcessingService: AIProcessingService,
     ) { }
 
     @Post('incoming')

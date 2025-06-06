@@ -1,4 +1,5 @@
-// src/auth/auth.controller.ts
+// File name: src/auth/auth.controller.ts
+
 import {
     Controller,
     Post,

@@ -57,7 +57,7 @@ export class Agent {
     })
     phone_number: string;
 
-    // UPDATED PASSWORD FIELD - Now required for new agents
+    // PASSWORD FIELD - required for new agents
     @ApiProperty({
         description: 'Encrypted password for authentication',
         writeOnly: true,

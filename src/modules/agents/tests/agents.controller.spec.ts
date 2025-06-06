@@ -1,7 +1,7 @@
 // File name: src/agents/agents.controller.spec.ts
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { AgentsController } from './agents.controller';
+import { AgentsController } from '../agents.controller';
 
 describe('AgentsController', () => {
   let controller: AgentsController;

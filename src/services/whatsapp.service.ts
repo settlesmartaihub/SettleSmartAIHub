@@ -17,7 +17,7 @@ export interface TwilioWebhookPayload {
     MessageSid: string;
     AccountSid: string;
     From: string; // whatsapp:+2348123456789
-    To: string;   // whatsapp:+14155238886
+    To: string;   // whatsapp:+2349113738527
     Body: string;
     MediaUrl0?: string;
     MediaContentType0?: string;

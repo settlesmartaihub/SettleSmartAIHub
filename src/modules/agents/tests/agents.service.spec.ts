@@ -1,7 +1,7 @@
 // File name: src/agents/agents.service.spec.ts
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { AgentsService } from './agents.service';
+import { AgentsService } from '../agents.service';
 
 describe('AgentsService', () => {
   let service: AgentsService;

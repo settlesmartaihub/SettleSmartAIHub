@@ -1,4 +1,4 @@
-// src/auth/dto/auth-response.dto.ts
+// File name: src/auth/dto/auth-response.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
 

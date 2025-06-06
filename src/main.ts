@@ -1,3 +1,5 @@
+// File: src/main.ts
+
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -19,10 +21,10 @@ async function bootstrap() {
   const apiPrefix = "api/v1";
   const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*'];
   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
-  
-  // QUICK FIX: Always enable Swagger for now
+
+  // Always enable Swagger for now
   const swaggerEnabled = true;
-  
+
   console.log('Debug - Environment Variables:');
   console.log('NODE_ENV:', environment);
   console.log('SWAGGER_ENABLED from process.env:', process.env.SWAGGER_ENABLED);
@@ -87,12 +89,12 @@ async function bootstrap() {
 
   // Listen on all interfaces for Render
   await app.listen(port, '0.0.0.0');
-  
+
   console.log(`SettleSmart AI Backend running on port: ${port}`);
   console.log(`Environment: ${environment}`);
   console.log(`API Base URL: /${apiPrefix}`);
   console.log(`Root health check: /`);
-  
+
   if (swaggerEnabled) {
     console.log(`✅ API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
   } else {

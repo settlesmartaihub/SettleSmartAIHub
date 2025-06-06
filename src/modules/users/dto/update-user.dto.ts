@@ -1,4 +1,5 @@
 // File: src/modules/users/dto/update-user.dto.ts
+
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsObject } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
