@@ -1,5 +1,3 @@
-// File name: src/main.ts
-
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -21,9 +19,15 @@ async function bootstrap() {
   const apiPrefix = "api/v1";
   const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*'];
   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
-
-  // NEW: Get Swagger enabled status from environment variable
-  const swaggerEnabled = configService.get<string>('SWAGGER_ENABLED') === 'true' || environment === 'development';
+  
+  // QUICK FIX: Always enable Swagger for now
+  const swaggerEnabled = true;
+  
+  console.log('Debug - Environment Variables:');
+  console.log('NODE_ENV:', environment);
+  console.log('SWAGGER_ENABLED from process.env:', process.env.SWAGGER_ENABLED);
+  console.log('SWAGGER_ENABLED from configService:', configService.get<string>('SWAGGER_ENABLED'));
+  console.log('Final swaggerEnabled:', swaggerEnabled);
 
   // Enable CORS with more permissive settings for production
   app.enableCors({
@@ -59,14 +63,15 @@ async function bootstrap() {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       api_base: '/api/v1',
-      documentation: swaggerEnabled ? '/api/v1/docs' : 'disabled'
+      documentation: swaggerEnabled ? '/api/v1/docs' : 'disabled',
+      swagger_status: 'ENABLED - ALWAYS ON'
     });
   });
 
   // Set global prefix AFTER adding root route
   app.setGlobalPrefix(apiPrefix);
 
-  // UPDATED: Swagger Documentation - now controlled by environment variable
+  // ALWAYS ENABLE SWAGGER FOR NOW
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
       .setTitle(configService.get<string>('SWAGGER_TITLE') || 'SettleSmart AI API')
@@ -77,20 +82,21 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+    console.log('✅ Swagger documentation has been set up successfully!');
   }
 
   // Listen on all interfaces for Render
   await app.listen(port, '0.0.0.0');
-
+  
   console.log(`SettleSmart AI Backend running on port: ${port}`);
   console.log(`Environment: ${environment}`);
   console.log(`API Base URL: /${apiPrefix}`);
   console.log(`Root health check: /`);
-
+  
   if (swaggerEnabled) {
-    console.log(`API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
+    console.log(`✅ API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
   } else {
-    console.log(`API Documentation: DISABLED (set SWAGGER_ENABLED=true to enable)`);
+    console.log(`❌ API Documentation: DISABLED`);
   }
 }
 
