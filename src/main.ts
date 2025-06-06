@@ -1,3 +1,5 @@
+// File name: src/main.ts
+
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -13,12 +15,15 @@ import favicon from 'serve-favicon';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  
+
   // Get configuration values with fallbacks
   const port = process.env.PORT || configService.get<number>('app.port') || 3000;
   const apiPrefix = "api/v1";
   const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*'];
   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
+
+  // NEW: Get Swagger enabled status from environment variable
+  const swaggerEnabled = configService.get<string>('SWAGGER_ENABLED') === 'true' || environment === 'development';
 
   // Enable CORS with more permissive settings for production
   app.enableCors({
@@ -35,7 +40,7 @@ async function bootstrap() {
     transform: true,
     disableErrorMessages: environment === 'production',
   }));
-  
+
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
@@ -53,35 +58,39 @@ async function bootstrap() {
       message: 'SettleSmart AI Backend - Health Check OK',
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      api_base: '/api/v1'
+      api_base: '/api/v1',
+      documentation: swaggerEnabled ? '/api/v1/docs' : 'disabled'
     });
   });
 
   // Set global prefix AFTER adding root route
   app.setGlobalPrefix(apiPrefix);
 
-  // Swagger Documentation (only in development)
-  if (environment === 'development') {
+  // UPDATED: Swagger Documentation - now controlled by environment variable
+  if (swaggerEnabled) {
     const config = new DocumentBuilder()
       .setTitle(configService.get<string>('SWAGGER_TITLE') || 'SettleSmart AI API')
       .setDescription(configService.get<string>('SWAGGER_DESCRIPTION') || 'Intelligent Property Matching API')
       .setVersion(configService.get<string>('SWAGGER_VERSION') || '1.0.0')
       .addBearerAuth()
       .build();
+
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
   // Listen on all interfaces for Render
   await app.listen(port, '0.0.0.0');
-  
+
   console.log(`SettleSmart AI Backend running on port: ${port}`);
   console.log(`Environment: ${environment}`);
   console.log(`API Base URL: /${apiPrefix}`);
   console.log(`Root health check: /`);
-  
-  if (environment === 'development') {
-    console.log(`API Documentation: http://localhost:${port}/${apiPrefix}/docs`);
+
+  if (swaggerEnabled) {
+    console.log(`API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
+  } else {
+    console.log(`API Documentation: DISABLED (set SWAGGER_ENABLED=true to enable)`);
   }
 }
 
