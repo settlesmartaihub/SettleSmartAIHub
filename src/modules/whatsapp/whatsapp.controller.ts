@@ -154,7 +154,8 @@ export class WhatsAppController {
 
             // Validate webhook signature for security (optional but recommended)
             if (twilioSignature) {
-                const webhookUrl = process.env.WEBHOOK_URL || 'https://your-domain.com/api/v1/whatsapp/incoming';
+                // TODO: I need to replace with actual webhook URL
+                const webhookUrl = process.env.WEBHOOK_URL || 'https://settlesmartaihub.onrender.com/api/v1/whatsapp/incoming';
                 const isValid = this.whatsAppService.validateWebhook(
                     twilioSignature,
                     webhookUrl,

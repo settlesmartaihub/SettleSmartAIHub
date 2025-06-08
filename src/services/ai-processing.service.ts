@@ -1224,8 +1224,8 @@ export class AIProcessingService {
         average_tokens_per_request: number;
         model_used: string;
     }> {
-        // In a real implementation, you'd track these stats
-        // For now, return mock data
+        // In a real implementation, we would track these stats
+        // For now, we return mock data
         return {
             total_tokens_used: 0,
             requests_made: 0,

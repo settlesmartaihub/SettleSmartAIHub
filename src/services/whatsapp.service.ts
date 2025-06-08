@@ -622,7 +622,7 @@ export class WhatsAppService {
     async handleVoiceMessage(mediaUrl: string, userPhone: string): Promise<string> {
         try {
             // This would integrate with speech-to-text service
-            // For now, return a placeholder
+            // For now, let's just return a placeholder
             this.logger.log(`Processing voice message from ${userPhone}: ${mediaUrl}`);
 
             // TODO: Integrate with Google Speech-to-Text or similar
