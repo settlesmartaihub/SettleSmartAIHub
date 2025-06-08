@@ -1,3 +1,5 @@
+// File name: src/modules/properties/dto/property-match.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';

@@ -161,7 +161,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me/dashboard')
+    @Get('self/dashboard')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get Agent Dashboard',
@@ -180,7 +180,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me')
+    @Get('self')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get Current Agent Profile',
@@ -199,7 +199,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me/analytics')
+    @Get('self/analytics')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get My Analytics',
@@ -218,7 +218,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me/leads')
+    @Get('self/leads')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get My Leads',
@@ -237,7 +237,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me/performance')
+    @Get('self/performance')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get My Performance',
@@ -265,7 +265,7 @@ export class AgentsController {
         };
     }
 
-    @Get('me/subscription')
+    @Get('self/subscription')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Get My Subscription',
@@ -407,7 +407,7 @@ export class AgentsController {
         };
     }
 
-    @Patch('me')
+    @Patch('self')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Update My Profile',
@@ -429,7 +429,7 @@ export class AgentsController {
         };
     }
 
-    @Patch('me/subscription')
+    @Patch('self/subscription')
     @Roles(UserRole.AGENT)
     @ApiOperation({
         summary: 'Update My Subscription',

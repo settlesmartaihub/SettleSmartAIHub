@@ -127,12 +127,12 @@ export class AuthService {
             // Hash password
             const hashedPassword = await hashPassword(password);
 
-            // Create new agent data - FIXED: Proper typing
+            // Create new agent data
             const agentData = {
                 name,
                 email,
                 phone_number: normalizedPhone,
-                password: hashedPassword, // Password is now properly supported
+                password: hashedPassword,
                 business_name: businessName || name,
                 verification_status: 'pending' as any,
                 status: 'active' as any,
@@ -300,7 +300,7 @@ export class AuthService {
             return { ...user, role: 'user' };
         }
 
-        // Check if it's admin - FIXED: Use the same UUID as in findOrCreateAdmin
+        // Check if it's admin - Use the same UUID as in findOrCreateAdmin
         if (userId === ADMIN_USER_ID) {
             return {
                 id: userId,
@@ -337,7 +337,7 @@ export class AuthService {
         // For demo purposes, create a default admin
         if (email === 'admin@settlesmart.ng' || email.includes('admin')) {
             return {
-                id: ADMIN_USER_ID, // FIXED: Now uses valid UUID
+                id: ADMIN_USER_ID, // Uses valid UUID
                 email: 'admin@settlesmart.ng',
                 password: await hashPassword('admin123'), // Default admin password
                 name: 'System Admin',

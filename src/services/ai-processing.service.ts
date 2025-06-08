@@ -85,7 +85,7 @@ export class AIProcessingService {
         let tokensUsed = 0;
 
         try {
-            this.logger.log(`🤖 Processing message: "${userMessage}" from ${userPhone}`);
+            this.logger.log(`Processing message: "${userMessage}" from ${userPhone}`);
 
             let intent: string;
             let entities: ExtractedEntities;
@@ -436,7 +436,7 @@ export class AIProcessingService {
         let budget: { min: number; max: number } | undefined;
         let suggestedActions: string[] = [];
 
-        this.logger.log(`🔧 Enhancing OpenAI response for intent: ${intent}`);
+        this.logger.log(`Enhancing OpenAI response for intent: ${intent}`);
 
         // Determine actions based on intent and entities
         switch (intent) {

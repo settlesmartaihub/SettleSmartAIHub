@@ -33,14 +33,12 @@ import { Express } from 'express';
 
 // Update service import
 import { PropertiesService } from './properties.service';
-// Update DTO imports
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertySearchDto } from './dto/property-search.dto';
 import { PropertyMatchDto } from './dto/property-match.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { UploadImagesDto } from './dto/upload-images.dto';
-// Update common imports
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';

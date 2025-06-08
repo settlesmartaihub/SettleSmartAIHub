@@ -30,8 +30,6 @@ import {
     ApiBearerAuth,
     ApiBody
 } from '@nestjs/swagger';
-
-// Update service import
 import { UsersService } from './users.service';
 
 // DTO imports

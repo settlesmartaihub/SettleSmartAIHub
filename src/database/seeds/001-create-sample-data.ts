@@ -1,4 +1,4 @@
-// Filename: src/database/seeds/001-create-sample-data.ts
+// File name: src/database/seeds/001-create-sample-data.ts
 
 import { DataSource } from 'typeorm';
 import { User, UserStatus } from '../../modules/users/entities/user.entity';

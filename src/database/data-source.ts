@@ -1,60 +1,5 @@
-// // File name: src/database/data-source.ts
-
-// import { DataSource } from 'typeorm';
-// import { config } from 'dotenv';
-// import { join } from 'path';
-
-// // Load environment variables
-// config();
-
-// const isDevelopment = (process.env.NODE_ENV || 'development') === 'development';
-
-// // Data Source Configuration for TypeORM CLI
-// export const AppDataSource = new DataSource({
-//     type: 'postgres',
-//     host: process.env.DATABASE_HOST || 'localhost',
-//     port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-//     username: process.env.DATABASE_USERNAME || 'postgres',
-//     password: process.env.DATABASE_PASSWORD || '',
-//     database: process.env.DATABASE_NAME || 'settlesmart_db',
-
-//     // Entity Discovery
-//     entities: [
-//         join(__dirname, '..', 'modules', '**', 'entities', '*.entity{.ts,.js}'),
-//     ],
-
-//     // Migration Configuration
-//     migrations: [
-//         join(__dirname, 'migrations', '*{.ts,.js}'),
-//     ],
-
-//     // Development Settings
-//     synchronize: isDevelopment,
-//     logging: isDevelopment ? ['query', 'error'] : ['error'],
-
-//     // Migration Settings
-//     migrationsTableName: 'settlesmart_migrations',
-// });
-
-// // Helper functions
-// export const initializeDataSource = async (): Promise<DataSource> => {
-//     if (!AppDataSource.isInitialized) {
-//         await AppDataSource.initialize();
-//         console.log('Data Source initialized successfully');
-//     }
-//     return AppDataSource;
-// };
-
-// export const destroyDataSource = async (): Promise<void> => {
-//     if (AppDataSource.isInitialized) {
-//         await AppDataSource.destroy();
-//         console.log('Data Source destroyed successfully');
-//     }
-// };
-
-// export default AppDataSource;
-
 // File name: src/database/data-source.ts
+
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { join } from 'path';
@@ -65,9 +10,9 @@ config();
 const isDevelopment = (process.env.NODE_ENV || 'development') === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
-console.log(`📊 Database Config - Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`📊 Is Development: ${isDevelopment}`);
-console.log(`📊 Is Production: ${isProduction}`);
+console.log(`Database Config - Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`Is Development: ${isDevelopment}`);
+console.log(`Is Production: ${isProduction}`);
 
 // Data Source Configuration for TypeORM CLI
 export const AppDataSource = new DataSource({
@@ -77,36 +22,36 @@ export const AppDataSource = new DataSource({
     username: process.env.DATABASE_USERNAME || 'postgres',
     password: process.env.DATABASE_PASSWORD || '',
     database: process.env.DATABASE_NAME || 'settlesmart_db',
-    
+
     // SSL Configuration - Only for production/Render
-    ssl: isProduction ? { 
-        rejectUnauthorized: false 
+    ssl: isProduction ? {
+        rejectUnauthorized: false
     } : false,
-    
+
     // Entity Discovery
     entities: [
         join(__dirname, '..', 'modules', '**', 'entities', '*.entity{.ts,.js}'),
     ],
-    
+
     // Migration Configuration
     migrations: [
         join(__dirname, 'migrations', '*{.ts,.js}'),
     ],
-    
+
     // CRITICAL: Different behavior for different environments
     // Local Development: Use synchronize for easy development
     // Production: Use migrations only
     synchronize: isDevelopment && !isProduction, // Only true in development
-    
+
     // Auto-run migrations ONLY in production
     migrationsRun: isProduction && process.env.DATABASE_MIGRATIONS_RUN === 'true',
-    
+
     // Logging
     logging: isDevelopment ? ['query', 'error'] : ['error'],
-    
+
     // Migration Settings
     migrationsTableName: 'settlesmart_migrations',
-    
+
     // Connection pool settings optimized per environment
     extra: isProduction ? {
         connectionLimit: 10,
@@ -118,13 +63,13 @@ export const AppDataSource = new DataSource({
 // Helper functions
 export const initializeDataSource = async (): Promise<DataSource> => {
     if (!AppDataSource.isInitialized) {
-        console.log('🔄 Initializing database connection...');
+        console.log('Initializing database connection...');
         await AppDataSource.initialize();
         console.log('✅ Data Source initialized successfully');
-        
+
         // Only run migrations in production
         if (isProduction && process.env.DATABASE_MIGRATIONS_RUN === 'true') {
-            console.log('🔄 Production environment detected. Running migrations...');
+            console.log('Production environment detected. Running migrations...');
             try {
                 const migrations = await AppDataSource.runMigrations();
                 if (migrations.length === 0) {
@@ -137,7 +82,7 @@ export const initializeDataSource = async (): Promise<DataSource> => {
                 throw error;
             }
         } else if (isDevelopment) {
-            console.log('🔧 Development environment - using synchronize mode');
+            console.log('Development environment - using synchronize mode');
         }
     }
     return AppDataSource;

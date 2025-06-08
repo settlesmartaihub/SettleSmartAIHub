@@ -3,20 +3,14 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, FindOptionsWhere } from 'typeorm';
-
-// Update entity imports
 import { Property, PropertyStatus, PropertyVerificationStatus, PropertyType, PropertyAmenities } from './entities/property.entity';
 import { Agent, AgentStatus } from '../agents/entities/agent.entity';
 import { User } from '../users/entities/user.entity';
-
-// Update DTO imports
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertySearchDto } from './dto/property-search.dto';
 import { PropertyMatchDto } from './dto/property-match.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
-
-// Update service imports
 import { PaginatedResponse } from '../../common/interfaces/response.interface';
 import { PropertyMatchingService } from '../../services/property-matching.service';
 
@@ -279,6 +273,7 @@ export class PropertiesService {
             take: 50 // Limit for performance
         });
 
+        // TODO: Check if the AI is activated here and functions properly
         // Use AI matching service to score and rank properties
         const matchedProperties = await this.propertyMatchingService.matchProperties(user, properties);
 

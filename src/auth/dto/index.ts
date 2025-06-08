@@ -1,4 +1,4 @@
-// src/auth/dto/index.ts
+// File name: src/auth/dto/index.ts
 
 export { LoginDto, UserRole } from './login.dto';
 export { RegisterDto } from './register.dto';

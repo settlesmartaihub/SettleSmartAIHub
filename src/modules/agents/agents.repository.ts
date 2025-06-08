@@ -1,4 +1,4 @@
-// File: src/modules/agents/agents.repository.ts
+// File name    : src/modules/agents/agents.repository.ts
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -437,7 +437,7 @@ export class AgentsRepository {
         if (subscriptionTier === AgentSubscriptionTier.PREMIUM && expiresAt) {
             updateData.subscription_expires_at = expiresAt;
         } else if (subscriptionTier === AgentSubscriptionTier.BASIC) {
-            // FIXED: Explicitly handle null assignment with type assertion
+            // Explicitly handle null assignment with type assertion
             updateData.subscription_expires_at = null as any;
         }
 
@@ -564,6 +564,7 @@ export class AgentsRepository {
         const fromDate = new Date();
         fromDate.setDate(fromDate.getDate() - days);
 
+        // TODO: Replace with actual data
         // This would normally involve querying related tables for leads, conversations, etc.
         // For now, we'll return calculated values based on available data
         const propertiesCount = agent.properties?.length || 0;
@@ -595,6 +596,7 @@ export class AgentsRepository {
             throw new Error('Agent not found');
         }
 
+        // TODO: Replace this with actual data
         // This would normally query leads/conversations tables
         // For now, we'll return mock data based on agent stats
         const totalLeads = agent.total_leads;
@@ -768,7 +770,7 @@ export class AgentsRepository {
             rating: agent.rating,
             total_ratings: agent.total_ratings,
             subscription_info: subscriptionInfo,
-            recent_activity: agent.last_activity || null, // FIXED: Handle undefined case
+            recent_activity: agent.last_activity || null, // Handle undefined case
         };
     }
 }

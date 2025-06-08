@@ -1,4 +1,4 @@
-// File: scripts/run-migrations.ts
+// File name: scripts/run-migrations.ts
 
 import { config } from 'dotenv';
 import { AppDataSource } from '../src/database/data-source';
@@ -8,10 +8,10 @@ config();
 
 async function runMigrations() {
     try {
-        console.log('🔄 Initializing database connection...');
+        console.log('Initializing database connection...');
         await AppDataSource.initialize();
         
-        console.log('🔄 Running pending migrations...');
+        console.log('Running pending migrations...');
         const migrations = await AppDataSource.runMigrations();
         
         if (migrations.length === 0) {
@@ -23,7 +23,7 @@ async function runMigrations() {
             });
         }
         
-        console.log('🔄 Checking database tables...');
+        console.log('Checking database tables...');
         const queryRunner = AppDataSource.createQueryRunner();
         
         const tables = await queryRunner.query(`
@@ -34,7 +34,7 @@ async function runMigrations() {
             ORDER BY table_name;
         `);
         
-        console.log('📋 Available tables:');
+        console.log('Available tables:');
         tables.forEach((table: any) => {
             console.log(`  - ${table.table_name}`);
         });

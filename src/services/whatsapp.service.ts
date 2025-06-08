@@ -56,7 +56,7 @@ export class WhatsAppService {
     ) {
         const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
         const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
-        this.twilioWhatsAppNumber = this.configService.get<string>('TWILIO_WHATSAPP_NUMBER') || 'whatsapp:+14155238886';
+        this.twilioWhatsAppNumber = this.configService.get<string>('TWILIO_WHATSAPP_NUMBER') || 'whatsapp:+2349113738527';
 
         if (!accountSid || !authToken) {
             this.logger.error('Twilio credentials not configured properly');

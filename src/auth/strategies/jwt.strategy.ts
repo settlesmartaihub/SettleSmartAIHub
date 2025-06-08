@@ -1,4 +1,4 @@
-// File name: src/auth/strategies/jwt.strategy.ts - WITH DEBUG
+// File name: src/auth/strategies/jwt.strategy.ts
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';

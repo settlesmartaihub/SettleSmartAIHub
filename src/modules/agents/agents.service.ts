@@ -1,4 +1,4 @@
-// File: src/agents/agents.service.ts
+// File name: src/agents/agents.service.ts
 
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -167,7 +167,7 @@ export class AgentsService {
     }
 
 
-    // Verify agent (Admin only) - FIXED TO USE CORRECT DTO FIELDS
+    // Verify agent (Admin only)
 
     async verifyAgent(id: string, verifyAgentDto: VerifyAgentDto): Promise<Agent> {
         const agent = await this.findById(id);
@@ -176,15 +176,15 @@ export class AgentsService {
             throw new BadRequestException('Agent is already verified and active');
         }
 
-        // Map VerifyAgentDto fields correctly (check your actual DTO structure)
+        // Map VerifyAgentDto fields correctly (check actual DTO structure)
         // Most common fields are: verification_status, notes, approved
         const updateData: Partial<Agent> = {};
 
-        // If your DTO has 'approved' field
+        // If DTO has 'approved' field
         if ('approved' in verifyAgentDto) {
             updateData.status = (verifyAgentDto as any).approved ? AgentStatus.ACTIVE : AgentStatus.INACTIVE;
         }
-        // If your DTO has 'status' field directly
+        // If DTO has 'status' field directly
         else if ('status' in verifyAgentDto) {
             // Convert VerificationStatus to AgentStatus
             updateData.status = AgentStatus.ACTIVE; // Default to active when verified
@@ -198,7 +198,7 @@ export class AgentsService {
     }
 
     /**
-     * Update agent subscription - FIXED TO USE CORRECT DTO FIELDS
+     * Update agent subscription
      */
     async updateSubscription(id: string, updateSubscriptionDto: UpdateSubscriptionDto): Promise<Agent> {
         const agent = await this.findById(id);
@@ -344,6 +344,7 @@ export class AgentsService {
         const agent = await this.findById(agentId);
         const properties = await this.getPropertiesByAgentId(agentId);
 
+        // TODO: Replace this with actual data
         // Simplified lead generation - will enhance once user service is complete
         const potentialLeads: any[] = [];
         const hotLeads: any[] = [];
@@ -461,7 +462,7 @@ export class AgentsService {
         return {
             total_agents: totalAgents,
             active_agents: activeAgents,
-            pending_agents: 0, // Adjust based on your entity status values
+            pending_agents: 0, // Adjust based on the entity status values
             suspended_agents: 0,
             rejected_agents: inactiveAgents,
             basic_subscription: basicSubscription,
@@ -487,7 +488,7 @@ export class AgentsService {
     }
 
     /**
-     * Suspend agent - FIXED verification_status enum usage
+     * Suspend agent
      */
     async suspend(id: string, reason?: string): Promise<Agent> {
         const agent = await this.findById(id);

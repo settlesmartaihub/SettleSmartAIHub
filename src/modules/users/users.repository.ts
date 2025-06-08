@@ -6,4 +6,6 @@ import { User } from './entities/user.entity';
 @EntityRepository(User)
 export class UsersRepository extends Repository<User> {
     // Define custom queries and methods for users
+
+    // TODO: Add custom queries and methods
 }

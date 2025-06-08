@@ -312,7 +312,6 @@ export class UsersService {
             relations: ['property_searches']
         });
 
-        // src/users/users.service.ts - Fix return statements (lines 243 and 304)
         return {
             data: users,
             meta: {

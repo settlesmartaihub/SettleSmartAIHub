@@ -179,7 +179,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     // JSON indexes for property location
     await queryRunner.query(`CREATE INDEX "IDX_properties_location_area" ON "properties" ((location->>'area'))`);
     await queryRunner.query(`CREATE INDEX "IDX_properties_location_gin" ON "properties" USING GIN (location)`);
-    
+
     // Conversations indexes
     await queryRunner.query(`CREATE INDEX "IDX_conversations_user_phone" ON "conversations" ("user_phone")`);
     await queryRunner.query(`CREATE INDEX "IDX_conversations_session_id" ON "conversations" ("session_id")`);
@@ -194,7 +194,7 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_results_count" ON "property_searches" ("results_count")`);
     await queryRunner.query(`CREATE INDEX "IDX_property_searches_search_quality" ON "property_searches" ("search_quality")`);
 
-    console.log('SettleSmart AI database schema created successfully!');
+    console.log(' ✅SettleSmart AI database schema created successfully!');
     console.log('Tables created: users, agents, properties, conversations, property_searches');
     console.log('Indexes created for optimal performance');
     console.log('Password authentication enabled for agents');

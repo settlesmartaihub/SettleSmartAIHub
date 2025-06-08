@@ -35,7 +35,7 @@ export const validationSchema = Joi.object({
     // Twilio Configuration - More flexible validation
     TWILIO_ACCOUNT_SID: Joi.string().optional().allow(''),
     TWILIO_AUTH_TOKEN: Joi.string().optional().allow(''),
-    TWILIO_WHATSAPP_NUMBER: Joi.string().default('+14155238886'),
+    TWILIO_WHATSAPP_NUMBER: Joi.string().default('+2349113738527'),
     TWILIO_SANDBOX_CODE: Joi.string().optional().allow(''),
     // More flexible URI validation - allows localhost and any valid URL
     TWILIO_WEBHOOK_URL: Joi.string()
@@ -91,7 +91,7 @@ export const validationSchema = Joi.object({
     SMS_API_KEY: Joi.string().optional().allow(''),
     SMS_FROM: Joi.string().default('SettleSmart'),
 
-    // Redis - Optional
+    // Redis - TODO: Add support for Redis (Optional)
     REDIS_HOST: Joi.string().default('localhost'),
     REDIS_PORT: Joi.number().port().default(6379),
     REDIS_PASSWORD: Joi.string().optional().allow(''),

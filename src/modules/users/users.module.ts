@@ -1,11 +1,9 @@
+// File name: src/modules/users/users.module.ts
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-
-// Import entities
 import { User } from './entities/user.entity';
-
-// Import main components
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { UsersRepository } from './users.repository';
