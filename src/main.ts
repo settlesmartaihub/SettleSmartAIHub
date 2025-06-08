@@ -97,6 +97,7 @@ async function bootstrap() {
 
   if (swaggerEnabled) {
     console.log(`✅ API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
+    console.log('http://localhost:3000/api/v1/docs');
   } else {
     console.log(`❌ API Documentation: DISABLED`);
   }
