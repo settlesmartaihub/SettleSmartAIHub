@@ -68,29 +68,32 @@ export class WhatsAppService {
     }
 
     // Main webhook handler for incoming WhatsApp messages
+
     async handleIncomingMessage(payload: TwilioWebhookPayload): Promise<void> {
         try {
-            this.logger.log(`Incoming WhatsApp message from ${payload.From}: ${payload.Body}`);
+            this.logger.log(`📱 INCOMING WHATSAPP: ${payload.From} -> "${payload.Body}"`);
 
-            // Extract and normalize phone number
             const userPhone = this.extractPhoneNumber(payload.From);
             if (!userPhone) {
-                this.logger.error(`Invalid phone number format: ${payload.From}`);
+                this.logger.error(`❌ Invalid phone format: ${payload.From}`);
                 return;
             }
 
-            // Determine message type
-            const messageType = this.determineMessageType(payload);
+            this.logger.log(`📞 Extracted phone: ${userPhone}`);
 
-            // Process the message through our conversation system
+            // Get or create conversation
             const { conversation, isNewConversation } = await this.conversationsService.processWhatsAppMessage(
                 userPhone,
                 payload.Body,
-                messageType,
+                this.determineMessageType(payload),
                 this.extractMessageMetadata(payload)
             );
 
-            // Generate AI response
+            this.logger.log(`💬 Conversation ${isNewConversation ? 'created' : 'found'}: ${conversation.id}`);
+
+            // Process with AI - THIS IS THE KEY PART
+            this.logger.log(`🤖 Sending to AI: "${payload.Body}"`);
+
             const aiResponse = await this.aiProcessingService.processMessage(
                 payload.Body,
                 conversation.context,
@@ -98,7 +101,9 @@ export class WhatsAppService {
                 isNewConversation
             );
 
-            // Update conversation with AI response
+            this.logger.log(`✅ AI Response received: "${aiResponse.response.substring(0, 100)}..." (Intent: ${aiResponse.intent})`);
+
+            // Save AI response to conversation
             await this.conversationsService.addAIResponse(
                 conversation.id,
                 aiResponse.response,
@@ -106,29 +111,29 @@ export class WhatsAppService {
                 aiResponse.metadata
             );
 
-            // Send response back to user
+            // Send response back to WhatsApp
+            this.logger.log(`📤 Sending to WhatsApp: "${aiResponse.response.substring(0, 100)}..."`);
+
             await this.sendMessage({
                 to: userPhone,
                 body: aiResponse.response,
             });
 
-            // Handle any follow-up actions (property search, agent matching, etc.)
+            this.logger.log(`✅ WhatsApp message sent successfully to ${userPhone}`);
+
+            // Handle follow-up actions
             await this.handleFollowUpActions(aiResponse, conversation.id, userPhone);
 
-            this.logger.log(`Successfully processed WhatsApp message for ${userPhone}`);
-
         } catch (error) {
-            this.logger.error(`Error processing WhatsApp message: ${error.message}`, error.stack);
+            this.logger.error(`❌ WhatsApp processing failed: ${error.message}`, error.stack);
 
-            // Send error response to user
-            if (payload.From) {
-                const userPhone = this.extractPhoneNumber(payload.From);
-                if (userPhone) {
-                    await this.sendMessage({
-                        to: userPhone,
-                        body: 'Sorry, I encountered an issue processing your message. Please try again or contact support.',
-                    });
-                }
+            // Send fallback response
+            const userPhone = this.extractPhoneNumber(payload.From);
+            if (userPhone) {
+                await this.sendMessage({
+                    to: userPhone,
+                    body: "I'm sorry, I encountered an issue processing your message. Please try again or say 'help' for assistance.",
+                });
             }
         }
     }

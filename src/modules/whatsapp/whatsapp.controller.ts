@@ -1014,6 +1014,54 @@ export class WhatsAppController {
         }
     }
 
+    @Get('test-ai-flow')
+    @ApiOperation({
+        summary: 'Test AI Flow',
+        description: 'Test the AI flow with a sample message'
+    })
+    @ApiQuery({
+        name: 'message',
+        description: 'Sample message to test the AI flow',
+        example: 'I need a 2-bedroom flat in Lugbe under 800k'
+    })
+    async testAIFlow(@Query('message') message: string = 'I need a 2-bedroom flat in Lugbe under 800k') {
+        try {
+            this.logger.log(`🧪 Testing AI flow with message: "${message}"`);
+
+            const mockContext = {
+                current_intent: null,
+                conversation_stage: 'initial',
+                search_criteria: {},
+                last_property_recommendations: [],
+                matched_agents: []
+            };
+
+            const aiResponse = await this.aiProcessingService.processMessage(
+                message,
+                mockContext,
+                '+2348123456789',
+                true
+            );
+
+            this.logger.log(`✅ AI Test Result: "${aiResponse.response}"`);
+
+            return {
+                success: true,
+                test_message: message,
+                ai_response: aiResponse,
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            this.logger.error(`❌ AI Test Failed: ${error.message}`, error.stack);
+            return {
+                success: false,
+                error: error.message,
+                stack: error.stack,
+                timestamp: new Date().toISOString()
+            };
+        }
+    }
+
     @Get('test-openai-public')
     // @UseGuards(JwtAuthGuard, RolesGuard)
     // @Roles(UserRole.ADMIN)
