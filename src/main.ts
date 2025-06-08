@@ -1,5 +1,114 @@
-// File: src/main.ts
+// // File: src/main.ts
 
+// import { NestFactory } from '@nestjs/core';
+// import { ConfigService } from '@nestjs/config';
+// import { ValidationPipe } from '@nestjs/common';
+// import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+// import { AppModule } from './app.module';
+// import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+// import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+// import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+// import { join } from 'path';
+// import * as express from 'express';
+// import favicon from 'serve-favicon';
+
+// async function bootstrap() {
+//   const app = await NestFactory.create(AppModule);
+//   const configService = app.get(ConfigService);
+
+//   // Get configuration values with fallbacks
+//   const port = process.env.PORT || configService.get<number>('app.port') || 3000;
+//   const apiPrefix = "api/v1";
+//   const corsOrigins = configService.get<string[]>('app.corsOrigins') || ['*'];
+//   const environment = process.env.NODE_ENV || configService.get<string>('app.environment') || 'development';
+
+//   // Always enable Swagger for now
+//   const swaggerEnabled = true;
+
+//   console.log('Debug - Environment Variables:');
+//   console.log('NODE_ENV:', environment);
+//   console.log('SWAGGER_ENABLED from process.env:', process.env.SWAGGER_ENABLED);
+//   console.log('SWAGGER_ENABLED from configService:', configService.get<string>('SWAGGER_ENABLED'));
+//   console.log('Final swaggerEnabled:', swaggerEnabled);
+
+//   // Enable CORS with more permissive settings for production
+//   app.enableCors({
+//     origin: environment === 'production' ? true : corsOrigins,
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+//     credentials: true,
+//     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+//   });
+
+//   // Global pipes, filters, and interceptors
+//   app.useGlobalPipes(new ValidationPipe({
+//     whitelist: true,
+//     forbidNonWhitelisted: true,
+//     transform: true,
+//     disableErrorMessages: environment === 'production',
+//   }));
+
+//   app.useGlobalFilters(new AllExceptionsFilter());
+//   app.useGlobalInterceptors(
+//     new LoggingInterceptor(),
+//     new ResponseInterceptor(),
+//   );
+
+//   // Static file serving
+//   app.use('/public', express.static(join(__dirname, '..', 'public')));
+//   app.use(favicon(join(__dirname, '..', 'public', 'favicon.ico')));
+
+//   // Add a global root route handler for Render health checks BEFORE setting prefix
+//   const expressApp = app.getHttpAdapter().getInstance();
+//   expressApp.get('/', (req, res) => {
+//     res.json({
+//       message: 'SettleSmart AI Backend - Health Check OK',
+//       status: 'healthy',
+//       timestamp: new Date().toISOString(),
+//       api_base: '/api/v1',
+//       documentation: swaggerEnabled ? '/api/v1/docs' : 'disabled',
+//       swagger_status: 'ENABLED - ALWAYS ON'
+//     });
+//   });
+
+//   // Set global prefix AFTER adding root route
+//   app.setGlobalPrefix(apiPrefix);
+
+//   // ALWAYS ENABLE SWAGGER FOR NOW
+//   if (swaggerEnabled) {
+//     const config = new DocumentBuilder()
+//       .setTitle(configService.get<string>('SWAGGER_TITLE') || 'SettleSmart AI API')
+//       .setDescription(configService.get<string>('SWAGGER_DESCRIPTION') || 'Intelligent Property Matching API')
+//       .setVersion(configService.get<string>('SWAGGER_VERSION') || '1.0.0')
+//       .addBearerAuth()
+//       .build();
+
+//     const document = SwaggerModule.createDocument(app, config);
+//     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+//     console.log('✅ Swagger documentation has been set up successfully!');
+//   }
+
+//   // Listen on all interfaces for Render
+//   await app.listen(port, '0.0.0.0');
+
+//   console.log(`SettleSmart AI Backend running on port: ${port}`);
+//   console.log(`Environment: ${environment}`);
+//   console.log(`API Base URL: /${apiPrefix}`);
+//   console.log(`Root health check: /`);
+
+//   if (swaggerEnabled) {
+//     console.log(`✅ API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
+//     console.log('http://localhost:3000/api/v1/docs');
+//   } else {
+//     console.log(`❌ API Documentation: DISABLED`);
+//   }
+// }
+
+// bootstrap().catch(error => {
+//   console.error('Failed to start application:', error);
+//   process.exit(1);
+// });
+
+// File: src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -12,7 +121,66 @@ import { join } from 'path';
 import * as express from 'express';
 import favicon from 'serve-favicon';
 
+// Only import and run migration logic if in production
+async function runProductionMigrations() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Skip migration logic entirely if not in production
+  if (!isProduction) {
+    console.log('🔧 Development mode - skipping migration checks');
+    return;
+  }
+  
+  const { AppDataSource } = await import('./database/data-source');
+  
+  try {
+    console.log('🔄 Production: Checking database and running migrations...');
+    
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    
+    // Check if our main table exists
+    const queryRunner = AppDataSource.createQueryRunner();
+    const agentsTable = await queryRunner.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'agents'
+    `);
+    
+    if (agentsTable.length === 0) {
+      console.log('📋 Tables not found. Running migrations...');
+      const migrations = await AppDataSource.runMigrations();
+      console.log(`✅ Successfully ran ${migrations.length} migrations`);
+    } else {
+      console.log('✅ Database tables already exist');
+    }
+    
+    await queryRunner.release();
+    
+    // Close connection to avoid conflicts with NestJS
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+    }
+    
+  } catch (error) {
+    console.error('❌ Production migration error:', error);
+    // Don't crash the app - let it start anyway
+    try {
+      if (AppDataSource.isInitialized) {
+        await AppDataSource.destroy();
+      }
+    } catch (destroyError) {
+      console.error('Error closing connection:', destroyError);
+    }
+  }
+}
+
 async function bootstrap() {
+  // Run production migrations BEFORE creating the NestJS app
+  await runProductionMigrations();
+  
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
@@ -25,11 +193,11 @@ async function bootstrap() {
   // Always enable Swagger for now
   const swaggerEnabled = true;
 
-  console.log('Debug - Environment Variables:');
+  console.log('📊 Application Configuration:');
   console.log('NODE_ENV:', environment);
-  console.log('SWAGGER_ENABLED from process.env:', process.env.SWAGGER_ENABLED);
-  console.log('SWAGGER_ENABLED from configService:', configService.get<string>('SWAGGER_ENABLED'));
-  console.log('Final swaggerEnabled:', swaggerEnabled);
+  console.log('DATABASE_MIGRATIONS_RUN:', process.env.DATABASE_MIGRATIONS_RUN);
+  console.log('Port:', port);
+  console.log('Swagger enabled:', swaggerEnabled);
 
   // Enable CORS with more permissive settings for production
   app.enableCors({
@@ -64,16 +232,16 @@ async function bootstrap() {
       message: 'SettleSmart AI Backend - Health Check OK',
       status: 'healthy',
       timestamp: new Date().toISOString(),
+      environment: environment,
       api_base: '/api/v1',
       documentation: swaggerEnabled ? '/api/v1/docs' : 'disabled',
-      swagger_status: 'ENABLED - ALWAYS ON'
     });
   });
 
   // Set global prefix AFTER adding root route
   app.setGlobalPrefix(apiPrefix);
 
-  // ALWAYS ENABLE SWAGGER FOR NOW
+  // Setup Swagger documentation
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
       .setTitle(configService.get<string>('SWAGGER_TITLE') || 'SettleSmart AI API')
@@ -90,20 +258,21 @@ async function bootstrap() {
   // Listen on all interfaces for Render
   await app.listen(port, '0.0.0.0');
 
-  console.log(`SettleSmart AI Backend running on port: ${port}`);
-  console.log(`Environment: ${environment}`);
-  console.log(`API Base URL: /${apiPrefix}`);
-  console.log(`Root health check: /`);
-
+  console.log(`🚀 SettleSmart AI Backend running on port: ${port}`);
+  console.log(`🌍 Environment: ${environment}`);
+  console.log(`📡 API Base URL: /${apiPrefix}`);
+  console.log(`❤️ Root health check: /`);
+  
   if (swaggerEnabled) {
-    console.log(`✅ API Documentation: https://settlesmartaihub.onrender.com/${apiPrefix}/docs`);
-    console.log('http://localhost:3000/api/v1/docs');
-  } else {
-    console.log(`❌ API Documentation: DISABLED`);
+    const baseUrl = environment === 'production' 
+      ? 'https://settlesmartaihub.onrender.com' 
+      : 'http://localhost:3000';
+    console.log(`📚 API Documentation: ${baseUrl}/${apiPrefix}/docs`);
+    console.log(`📚 Swagger UI: ${baseUrl}/${apiPrefix}/docs`);
   }
 }
 
 bootstrap().catch(error => {
-  console.error('Failed to start application:', error);
+  console.error('💥 Failed to start application:', error);
   process.exit(1);
 });

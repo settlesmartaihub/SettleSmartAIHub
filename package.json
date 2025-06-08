@@ -24,6 +24,8 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
+    "migration:manual": "ts-node scripts/run-migrations.ts",
+    "db:check": "typeorm-ts-node-commonjs query \"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'\" -d src/database/data-source.ts",
     "schema:drop": "typeorm-ts-node-commonjs schema:drop -d src/database/data-source.ts",
     "prebuild": "rimraf dist",
     "postbuild": "echo 'Build completed successfully'"

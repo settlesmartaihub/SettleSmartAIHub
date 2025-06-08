@@ -1,3 +1,44 @@
+# services:
+#   - type: web
+#     name: settlesmart-ai-backend
+#     env: node
+#     region: oregon
+#     plan: starter
+#     buildCommand: npm ci && npm run build
+#     startCommand: npm start
+#     healthCheckPath: /api/v1/health
+#     envVars:
+#       - key: NODE_ENV
+#         value: production
+#       - key: PORT
+#         value: 3000
+#       - key: API_PREFIX
+#         value: api/v1
+      
+#       # Database Configuration
+#       - key: DATABASE_SSL
+#         value: true
+#       - key: DATABASE_SYNCHRONIZE
+#         value: false
+#       - key: DATABASE_MIGRATIONS_RUN
+#         value: true
+      
+#       # Production optimizations
+#       - key: SWAGGER_ENABLED
+#         value: false
+#       - key: LOG_LEVEL
+#         value: error
+#       - key: ENABLE_ANALYTICS
+#         value: true
+      
+#       # Business configuration
+#       - key: DEFAULT_LOCATION
+#         value: "Lugbe, Abuja"
+#       - key: MAX_PROPERTIES_PER_AGENT
+#         value: 50
+#       - key: CONVERSATION_TIMEOUT_MINUTES
+#         value: 30
+
 services:
   - type: web
     name: settlesmart-ai-backend
@@ -15,7 +56,7 @@ services:
       - key: API_PREFIX
         value: api/v1
       
-      # Database Configuration
+      # Database Configuration - CRITICAL
       - key: DATABASE_SSL
         value: true
       - key: DATABASE_SYNCHRONIZE
@@ -25,7 +66,7 @@ services:
       
       # Production optimizations
       - key: SWAGGER_ENABLED
-        value: false
+        value: true
       - key: LOG_LEVEL
         value: error
       - key: ENABLE_ANALYTICS
@@ -38,3 +79,9 @@ services:
         value: 50
       - key: CONVERSATION_TIMEOUT_MINUTES
         value: 30
+
+# PostgreSQL Database Service (if not already created)
+  - type: pgsql
+    name: settlesmart-postgres
+    databaseName: settlesmart_db
+    user: settlesmart_user
