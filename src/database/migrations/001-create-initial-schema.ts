@@ -177,8 +177,9 @@ export class CreateInitialSchema1706208000001 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_properties_created_at" ON "properties" ("created_at")`);
 
     // JSON indexes for property location
-    await queryRunner.query(`CREATE INDEX "IDX_properties_location_area" ON "properties" USING GIN ((location->>'area'))`);
-
+    await queryRunner.query(`CREATE INDEX "IDX_properties_location_area" ON "properties" ((location->>'area'))`);
+    await queryRunner.query(`CREATE INDEX "IDX_properties_location_gin" ON "properties" USING GIN (location)`);
+    
     // Conversations indexes
     await queryRunner.query(`CREATE INDEX "IDX_conversations_user_phone" ON "conversations" ("user_phone")`);
     await queryRunner.query(`CREATE INDEX "IDX_conversations_session_id" ON "conversations" ("session_id")`);
