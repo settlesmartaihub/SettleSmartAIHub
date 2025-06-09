@@ -91,7 +91,7 @@ export class WhatsAppService {
 
             this.logger.log(`💬 Conversation ${isNewConversation ? 'created' : 'found'}: ${conversation.id}`);
 
-            // Process with AI - THIS IS THE KEY PART
+            // Process with AI - THIS IS THE KEY PART WHERE THE MAGIC HAPPENS (TODO: I WILL FIX THIS ONCE I GET THE AI WORKING & TWILIO WORKING)
             this.logger.log(`🤖 Sending to AI: "${payload.Body}"`);
 
             const aiResponse = await this.aiProcessingService.processMessage(
@@ -101,7 +101,8 @@ export class WhatsAppService {
                 isNewConversation
             );
 
-            this.logger.log(`✅ AI Response received: "${aiResponse.response.substring(0, 100)}..." (Intent: ${aiResponse.intent})`);
+            // this.logger.log(`✅ AI Response received: "${aiResponse.response.substring(0, 100)}..." (Intent: ${aiResponse.intent})`);
+            this.logger.log(`✅ AI Response received: "${aiResponse.response}\n\n" (Intent: ${aiResponse.intent})`);
 
             // Save AI response to conversation
             await this.conversationsService.addAIResponse(
@@ -112,7 +113,8 @@ export class WhatsAppService {
             );
 
             // Send response back to WhatsApp
-            this.logger.log(`📤 Sending to WhatsApp: "${aiResponse.response.substring(0, 100)}..."`);
+            // this.logger.log(`📤 Sending to WhatsApp: "${aiResponse.response.substring(0, 100)}..."`);
+            this.logger.log(`📤 Sending to WhatsApp: "${aiResponse.response}\n\n"`);
 
             await this.sendMessage({
                 to: userPhone,

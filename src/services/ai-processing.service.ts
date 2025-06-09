@@ -104,7 +104,7 @@ export class AIProcessingService {
                         openaiUsed = true;
                         tokensUsed = openaiAnalysis.tokens_used || 0;
 
-                        this.logger.log(`✅ OpenAI processed successfully - Intent: ${intent}, Response: "${suggestedResponse.substring(0, 100)}..."`);
+                        this.logger.log(`✅ OpenAI processed successfully - Intent: ${intent}, Response: "${suggestedResponse}\n"`);
                     } else {
                         throw new Error('OpenAI returned null response');
                     }
@@ -136,7 +136,8 @@ export class AIProcessingService {
 
             const processingTime = Date.now() - startTime;
 
-            this.logger.log(`✅ Final AI response: "${response.text.substring(0, 100)}..."`);
+            // this.logger.log(`✅ Final AI response: "${response.text.substring(0, 100)}..."`);
+            this.logger.log(`✅ Final AI response: "${response.text}"`);
 
             return {
                 response: response.text,
@@ -171,7 +172,7 @@ export class AIProcessingService {
                     nlp_confidence: 0.3,
                     suggested_actions: ['try_again', 'show_help'],
                     openai_used: false,
-                    // error: error.message,  /* I need to include this error */
+                    // error: error.message,  /* I need to include this error */ TODO
                 },
             };
         }
@@ -328,7 +329,8 @@ export class AIProcessingService {
 
     // Validate OpenAI response
     private validateOpenAIResponse(analysis: any): OpenAIAnalysis {
-        this.logger.log(`🔍 Validating OpenAI response: ${JSON.stringify(analysis).substring(0, 200)}...`);
+        // this.logger.log(`🔍 Validating OpenAI response: ${JSON.stringify(analysis).substring(0, 200)}...`);
+        this.logger.log(`🔍 Validating OpenAI response: ${JSON.stringify(analysis)}`);
 
         // Be more lenient with validation
         const validated: OpenAIAnalysis = {
