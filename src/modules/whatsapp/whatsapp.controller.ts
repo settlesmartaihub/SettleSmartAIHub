@@ -67,12 +67,12 @@ export class WhatsAppController {
                 },
                 From: {
                     type: 'string',
-                    example: 'whatsapp:+2348123456789',
+                    example: 'whatsapp:+14155238886',
                     description: 'Sender WhatsApp number'
                 },
                 To: {
                     type: 'string',
-                    example: 'whatsapp:+2349113738527',
+                    example: 'whatsapp:+14155238886',
                     description: 'Recipient WhatsApp number (your Twilio number)'
                 },
                 Body: {
@@ -928,7 +928,7 @@ export class WhatsAppController {
                     dateSent: '2025-06-01T10:30:01Z',
                     dateUpdated: '2025-06-01T10:30:02Z',
                     direction: 'outbound-api',
-                    from: 'whatsapp:+2349113738527',
+                    from: 'whatsapp:+14155238886',
                     to: 'whatsapp:+2348123456789',
                     price: '0.005',
                     priceUnit: 'USD'
