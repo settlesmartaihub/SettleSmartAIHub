@@ -40,7 +40,7 @@ export class AuthService {
 
             // Determine which entity to check based on role or email domain
             if (role === UserRole.ADMIN || email.includes('admin') || email.includes('settlesmart')) {
-                // For admin, we'll create a default admin user if it doesn't exist
+                // For admin, we'll create a default Administrator if it doesn't exist
                 user = await this.findOrCreateAdmin(email);
                 userRole = 'admin';
             } else {
@@ -263,8 +263,8 @@ export class AuthService {
             } else if (userRole === 'admin') {
                 return {
                     id: userId,
-                    name: 'Admin User',
-                    email: 'admin@settlesmart.ng',
+                    name: 'Administrator',
+                    email: 'admin.settlesmartai@gmail.com',
                     role: 'admin',
                     permissions: ['manage_agents', 'verify_properties', 'view_analytics'],
                 };
@@ -304,8 +304,8 @@ export class AuthService {
         if (userId === ADMIN_USER_ID) {
             return {
                 id: userId,
-                name: 'Admin User',
-                email: 'admin@settlesmart.ng',
+                name: 'Administrator',
+                email: 'admin.settlesmartai@gmail.com',
                 role: 'admin',
                 status: 'active',
             };
@@ -335,10 +335,10 @@ export class AuthService {
     // Return admin with valid UUID
     private async findOrCreateAdmin(email: string) {
         // For demo purposes, create a default admin
-        if (email === 'admin@settlesmart.ng' || email.includes('admin')) {
+        if (email === 'admin.settlesmartai@gmail.com' || email.includes('admin')) {
             return {
                 id: ADMIN_USER_ID, // Uses valid UUID
-                email: 'admin@settlesmart.ng',
+                email: 'admin.settlesmartai@gmail.com',
                 password: await hashPassword('admin123'), // Default admin password
                 name: 'System Admin',
                 role: 'admin',

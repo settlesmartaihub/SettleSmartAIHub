@@ -36,7 +36,7 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
-        summary: 'User Login',
+        summary: 'Agent or Admin Login',
         description: 'Authenticate user (Admin, Agent, or WhatsApp User) and return JWT tokens'
     })
     @ApiBody({ type: LoginDto })
@@ -161,11 +161,12 @@ export class AuthController {
         }
     }
 
+    // TODO: Check against agent and admin profile retrieval
     @Get('profile')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @ApiOperation({
-        summary: 'Get User Profile',
+        summary: 'User Profile (Agent or Admin)',
         description: 'Get current authenticated user profile information'
     })
     @ApiResponse({
@@ -279,7 +280,7 @@ export class AuthController {
     })
     async logout() {
         // JWT tokens are stateless, so logout is handled client-side
-        // In production, you might want to maintain a blacklist of tokens
+        // TODO: (Check)In production, you might want to maintain a blacklist of tokens
         return createSuccessResponse(
             { message: 'Please remove the token from client storage' },
             'Logout successful'
@@ -300,7 +301,7 @@ export class AuthController {
                 message: 'Admin test credentials',
                 data: {
                     credentials: {
-                        email: 'admin@settlesmart.ng',
+                        email: 'admin.settlesmartai@gmail.com',
                         password: 'admin123',
                         role: 'admin'
                     },
@@ -314,7 +315,7 @@ export class AuthController {
         return createSuccessResponse(
             {
                 credentials: {
-                    email: 'admin@settlesmart.ng',
+                    email: 'admin.settlesmartai@gmail.com',
                     password: 'admin123',
                     role: 'admin'
                 },

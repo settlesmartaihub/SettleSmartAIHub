@@ -12,7 +12,7 @@ export enum UserRole {
 export class LoginDto {
     @ApiProperty({
         description: 'Email address',
-        example: 'admin@settlesmart.ng'
+        example: 'admin.settlesmartai@gmail.com'
     })
     @IsEmail({}, { message: 'Please provide a valid email address' })
     email: string;
