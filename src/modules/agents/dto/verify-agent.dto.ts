@@ -1,30 +1,70 @@
 // File name: src/modules/agents/dto/verify-agent.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-
-export enum VerificationStatus {
-    VERIFIED = 'verified',
-    REJECTED = 'rejected',
-}
+import { IsEnum, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { AgentVerificationStatus } from '../entities/agent.entity';
 
 export class VerifyAgentDto {
     @ApiProperty({
-        description: 'Verification status',
-        example: 'verified',
-        enum: VerificationStatus,
+        description: 'Verification decision',
+        example: true,
+        type: Boolean
     })
-    @IsEnum(VerificationStatus)
-    status: VerificationStatus;
+    @IsBoolean()
+    approved: boolean;
+
+    @ApiProperty({
+        description: 'Verification status to set',
+        enum: AgentVerificationStatus,
+        example: AgentVerificationStatus.VERIFIED,
+        required: false
+    })
+    @IsOptional()
+    @IsEnum(AgentVerificationStatus)
+    verification_status?: AgentVerificationStatus;
 
     @ApiProperty({
         description: 'Admin notes for verification decision',
-        example: 'All documents verified successfully. Business registration confirmed.',
-        required: false,
-        maxLength: 500,
+        example: 'Agent documents verified. Business license confirmed.',
+        required: false
     })
     @IsOptional()
     @IsString()
-    @MaxLength(500)
-    admin_notes?: string;
+    notes?: string;
+
+    @ApiProperty({
+        description: 'Reason for rejection (if applicable)',
+        example: 'Invalid business license',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    rejection_reason?: string;
+}
+
+// Additional DTO for bulk verification
+export class BulkVerifyAgentsDto {
+    @ApiProperty({
+        description: 'Array of agent IDs to verify',
+        example: ['uuid1', 'uuid2', 'uuid3'],
+        type: [String]
+    })
+    agent_ids: string[];
+
+    @ApiProperty({
+        description: 'Verification decision for all agents',
+        example: true,
+        type: Boolean
+    })
+    @IsBoolean()
+    approved: boolean;
+
+    @ApiProperty({
+        description: 'Notes for bulk verification',
+        example: 'Bulk verification after document review',
+        required: false
+    })
+    @IsOptional()
+    @IsString()
+    notes?: string;
 }

@@ -28,10 +28,10 @@ import {
     ApiConsumes
 } from '@nestjs/swagger';
 
-// Use Express.Multer.File type instead of custom interface
+// Import Express.Multer.File type
 import { Express } from 'express';
 
-// Update service import
+// Service and DTO imports
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -39,12 +39,17 @@ import { PropertySearchDto } from './dto/property-search.dto';
 import { PropertyMatchDto } from './dto/property-match.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { UploadImagesDto } from './dto/upload-images.dto';
+
+// Guards and decorators
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { ResponseInterceptor } from '../../common/interceptors/response.interceptor';
 import { FileUploadUtil } from '../../common/utils/upload/file-upload.util';
+
+// Import our new verification decorator
+import { VerifiedAgent, RequireVerifiedAgent } from '../../common/decorators/agent-verified.decorator';
 
 @ApiTags('Properties')
 @Controller('properties')
@@ -53,12 +58,10 @@ export class PropertiesController {
     constructor(private readonly propertiesService: PropertiesService) { }
 
     @Post()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.AGENT)
-    @ApiBearerAuth()
+    @VerifiedAgent() // Use our new decorator
     @ApiOperation({
         summary: 'Create new property listing',
-        description: 'Agent creates a new property listing with all details'
+        description: 'Create a new property listing (only verified agents can create properties)'
     })
     @ApiBody({ type: CreatePropertyDto })
     @ApiResponse({
@@ -86,6 +89,22 @@ export class PropertiesController {
                     verification_status: 'pending',
                     status: 'available',
                     created_at: '2025-05-27T15:30:00.000Z'
+                }
+            }
+        }
+    })
+    @ApiResponse({
+        status: HttpStatus.FORBIDDEN,
+        description: 'Agent not verified',
+        schema: {
+            example: {
+                statusCode: 403,
+                message: 'Only verified agents can create property listings',
+                error: 'AGENT_NOT_VERIFIED',
+                details: {
+                    verification_status: 'pending',
+                    required_status: 'verified',
+                    next_steps: 'Contact admin for account verification'
                 }
             }
         }
@@ -206,12 +225,10 @@ export class PropertiesController {
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.AGENT)
-    @ApiBearerAuth()
+    @VerifiedAgent() // Require verification for updates
     @ApiOperation({
         summary: 'Update property',
-        description: 'Update property details (agent can only update own properties)'
+        description: 'Update property details (verified agents can only update own properties)'
     })
     @ApiParam({ name: 'id', description: 'Property UUID' })
     @ApiBody({ type: UpdatePropertyDto })
@@ -229,9 +246,7 @@ export class PropertiesController {
     }
 
     @Patch(':id/status')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.AGENT)
-    @ApiBearerAuth()
+    @VerifiedAgent() // Require verification for status updates
     @ApiOperation({
         summary: 'Update property status',
         description: 'Update property availability status (available, rented, maintenance)'
@@ -259,9 +274,7 @@ export class PropertiesController {
     }
 
     @Post(':id/images')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.AGENT)
-    @ApiBearerAuth()
+    @VerifiedAgent() // Require verification for image uploads
     @UseInterceptors(FilesInterceptor('images', 10, FileUploadUtil.createMulterOptions('properties')))
     @ApiConsumes('multipart/form-data')
     @ApiOperation({
@@ -301,18 +314,28 @@ export class PropertiesController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.AGENT, UserRole.ADMIN)
-    @ApiBearerAuth()
+    @RequireVerifiedAgent([
+        ApiResponse({
+            status: HttpStatus.OK,
+            description: 'Property deleted successfully'
+        }),
+        ApiResponse({
+            status: HttpStatus.FORBIDDEN,
+            description: 'Agent not verified or not property owner',
+            schema: {
+                example: {
+                    statusCode: 403,
+                    message: 'Agent verification required to delete properties',
+                    error: 'AGENT_NOT_VERIFIED'
+                }
+            }
+        })
+    ])
     @ApiOperation({
         summary: 'Delete property',
-        description: 'Delete property listing (agent can only delete own properties)'
+        description: 'Delete property listing (verified agents can only delete own properties)'
     })
     @ApiParam({ name: 'id', description: 'Property UUID' })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        description: 'Property deleted successfully'
-    })
     async deleteProperty(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
         const agentId = req.user.id;
         await this.propertiesService.deleteProperty(id, agentId);

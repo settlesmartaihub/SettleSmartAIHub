@@ -1,4 +1,4 @@
-// File name: src/auth/auth.service.ts
+// File name: src/auth/auth.service.ts (Fixed register method)
 
 import {
     Injectable,
@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../modules/users/entities/user.entity';
-import { Agent } from '../modules/agents/entities/agent.entity';
+import { Agent, AgentVerificationStatus, AgentStatus } from '../modules/agents/entities/agent.entity';
 import { LoginDto, RegisterDto, ChangePasswordDto, AuthResponseDto, UserRole } from './dto';
 import { hashPassword, comparePassword } from '../common/utils/encryption.util';
 import { normalizePhoneNumber } from '../common/utils/phone.util';
@@ -31,6 +31,82 @@ export class AuthService {
         private readonly configService: ConfigService,
     ) { }
 
+    // Updated register method with proper verification status
+    async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+        const { name, email, phone, password, businessName, role = UserRole.AGENT } = registerDto;
+
+        try {
+            // Normalize phone number
+            const normalizedPhone = normalizePhoneNumber(phone);
+
+            // Check if user already exists
+            const existingAgent = await this.agentRepository.findOne({
+                where: [{ email }, { phone_number: normalizedPhone }]
+            });
+
+            if (existingAgent) {
+                throw new ConflictException('Agent with this email or phone already exists');
+            }
+
+            // Hash password
+            const hashedPassword = await hashPassword(password);
+
+            // Create new agent data with PENDING verification status
+            const agentData = {
+                name,
+                email,
+                phone_number: normalizedPhone,
+                password: hashedPassword,
+                business_name: businessName || name,
+                verification_status: AgentVerificationStatus.PENDING, // Set as PENDING by default
+                status: AgentStatus.ACTIVE, // Account is active but not verified
+                subscription_tier: 'basic' as any,
+                location: 'Lugbe, Abuja',
+                rating: 0,
+                total_ratings: 0,
+                successful_leads: 0,
+                total_leads: 0,
+            };
+
+            // Create and save the new agent
+            const newAgent = this.agentRepository.create(agentData);
+            const savedAgent = await this.agentRepository.save(newAgent);
+
+            // Generate tokens but include verification status in response
+            const agentEmail = savedAgent.email || savedAgent.phone_number;
+            const tokens = await this.generateTokens(savedAgent.id, agentEmail, 'agent');
+
+            // Log the registration for admin tracking
+            console.log(`🔔 NEW AGENT REGISTRATION: ${savedAgent.email} - Status: PENDING VERIFICATION`);
+
+            // Return response with all verification fields properly typed
+            const authResponse: AuthResponseDto = {
+                ...tokens,
+                user: {
+                    id: savedAgent.id,
+                    name: savedAgent.name,
+                    email: agentEmail,
+                    role: 'agent',
+                    phone: savedAgent.phone_number,
+                    businessName: savedAgent.business_name,
+                    verificationStatus: savedAgent.verification_status,
+                },
+                // Add verification message to registration response
+                message: 'Agent registered successfully. Your account is pending verification by admin.',
+                needsVerification: true,
+                verificationStatus: savedAgent.verification_status
+            };
+
+            return authResponse;
+        } catch (error) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+            throw new BadRequestException('Registration failed: ' + error.message);
+        }
+    }
+
+    // Updated login method to check verification status
     async login(loginDto: LoginDto): Promise<AuthResponseDto> {
         const { email, password, role } = loginDto;
 
@@ -88,7 +164,8 @@ export class AuthService {
             // Generate tokens
             const tokens = await this.generateTokens(user.id, user.email || user.phone_number, userRole);
 
-            return {
+            // Create base response data
+            const authResponse: AuthResponseDto = {
                 ...tokens,
                 user: {
                     id: user.id,
@@ -100,6 +177,16 @@ export class AuthService {
                     verificationStatus: user.verification_status,
                 },
             };
+
+            // Add verification warning for unverified agents
+            if (userRole === 'agent' && user.verification_status !== AgentVerificationStatus.VERIFIED) {
+                authResponse.verificationWarning = true;
+                authResponse.verificationMessage = this.getVerificationMessage(user.verification_status);
+                
+                console.log(`⚠️  LOGIN: Unverified agent ${user.email} - Status: ${user.verification_status}`);
+            }
+
+            return authResponse;
         } catch (error) {
             if (error instanceof UnauthorizedException) {
                 throw error;
@@ -108,67 +195,17 @@ export class AuthService {
         }
     }
 
-    async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-        const { name, email, phone, password, businessName, role = UserRole.AGENT } = registerDto;
-
-        try {
-            // Normalize phone number
-            const normalizedPhone = normalizePhoneNumber(phone);
-
-            // Check if user already exists
-            const existingAgent = await this.agentRepository.findOne({
-                where: [{ email }, { phone_number: normalizedPhone }]
-            });
-
-            if (existingAgent) {
-                throw new ConflictException('Agent with this email or phone already exists');
-            }
-
-            // Hash password
-            const hashedPassword = await hashPassword(password);
-
-            // Create new agent data
-            const agentData = {
-                name,
-                email,
-                phone_number: normalizedPhone,
-                password: hashedPassword,
-                business_name: businessName || name,
-                verification_status: 'pending' as any,
-                status: 'active' as any,
-                subscription_tier: 'basic' as any,
-                location: 'Lugbe, Abuja',
-                rating: 0,
-                total_ratings: 0,
-                successful_leads: 0,
-                total_leads: 0,
-            };
-
-            // Proper agent creation and saving
-            const newAgent = this.agentRepository.create(agentData);
-            const savedAgent = await this.agentRepository.save(newAgent);
-
-            // Proper access to savedAgent properties
-            const agentEmail = savedAgent.email || savedAgent.phone_number;
-            const tokens = await this.generateTokens(savedAgent.id, agentEmail, 'agent');
-
-            return {
-                ...tokens,
-                user: {
-                    id: savedAgent.id,
-                    name: savedAgent.name,
-                    email: agentEmail,
-                    role: 'agent',
-                    phone: savedAgent.phone_number,
-                    businessName: savedAgent.business_name,
-                    verificationStatus: savedAgent.verification_status,
-                },
-            };
-        } catch (error) {
-            if (error instanceof ConflictException) {
-                throw error;
-            }
-            throw new BadRequestException('Registration failed: ' + error.message);
+    // Helper method to get verification message
+    private getVerificationMessage(status: AgentVerificationStatus): string {
+        switch (status) {
+            case AgentVerificationStatus.PENDING:
+                return 'Your account is pending verification. You cannot create properties until verified.';
+            case AgentVerificationStatus.REJECTED:
+                return 'Your account verification was rejected. Please contact support.';
+            case AgentVerificationStatus.SUSPENDED:
+                return 'Your account has been suspended. Please contact support.';
+            default:
+                return 'Account verification required.';
         }
     }
 
@@ -215,16 +252,17 @@ export class AuthService {
     async getProfile(userId: string, userRole: string): Promise<any> {
         try {
             if (userRole === 'agent') {
-                const agent = await this.agentRepository.findOne({ where: { id: userId } });
+                const agent = await this.agentRepository.findOne({
+                    where: { id: userId },
+                    select: ['id', 'email', 'name', 'phone_number', 'business_name', 'verification_status', 'status', 'subscription_tier', 'location', 'rating', 'total_ratings', 'successful_leads', 'total_leads', 'last_activity', 'subscription_expires_at', 'created_at', 'updated_at']
+                });
+                
                 if (!agent) {
                     throw new NotFoundException('Agent not found');
                 }
 
-                // Remove password from response if it exists (safely)
-                const { password, ...agentProfile } = agent as any;
-
                 return {
-                    ...agentProfile,
+                    ...agent,
                     // Map to API-friendly names
                     phoneNumber: agent.phone_number,
                     businessName: agent.business_name,
@@ -235,15 +273,14 @@ export class AuthService {
                     totalLeads: agent.total_leads,
                     lastActivity: agent.last_activity,
                     subscriptionExpiresAt: agent.subscription_expires_at,
+                    // Include verification info
+                    isVerified: agent.verification_status === AgentVerificationStatus.VERIFIED,
+                    canCreateProperties: agent.verification_status === AgentVerificationStatus.VERIFIED && agent.status === AgentStatus.ACTIVE,
+                    verificationMessage: agent.verification_status !== AgentVerificationStatus.VERIFIED ? this.getVerificationMessage(agent.verification_status) : null,
                     // Include computed properties if they exist
-                    isVerified: agent.is_verified,
-                    isActive: agent.is_active,
-                    isPremium: agent.is_premium,
-                    subscriptionActive: agent.subscription_active,
-                    maxListings: agent.max_listings,
-                    conversionRate: agent.conversion_rate,
-                    displayPhone: agent.display_phone,
-                    hasPassword: !!password, // Indicate if password is set
+                    isActive: agent.status === AgentStatus.ACTIVE,
+                    isPremium: agent.subscription_tier === 'premium',
+                    maxListings: agent.subscription_tier === 'premium' ? 100 : 5,
                 };
             } else if (userRole === 'user') {
                 const user = await this.userRepository.findOne({ where: { id: userId } });

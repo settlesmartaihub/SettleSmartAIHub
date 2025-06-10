@@ -28,7 +28,9 @@ export class AuthResponseDto {
             name: 'John Doe',
             email: 'john@example.com',
             role: 'agent',
-            phone: '+2348123456789'
+            phone: '+2348123456789',
+            businessName: 'John Properties Ltd',
+            verificationStatus: 'pending'
         }
     })
     user: {
@@ -40,4 +42,41 @@ export class AuthResponseDto {
         businessName?: string;
         verificationStatus?: string;
     };
+
+    // Optional verification-related fields (for agent registration/login)
+    @ApiProperty({
+        description: 'Success or verification message',
+        example: 'Agent registered successfully. Your account is pending verification by admin.',
+        required: false
+    })
+    message?: string;
+
+    @ApiProperty({
+        description: 'Indicates if the user needs verification',
+        example: true,
+        required: false
+    })
+    needsVerification?: boolean;
+
+    @ApiProperty({
+        description: 'Current verification status',
+        example: 'pending',
+        enum: ['pending', 'verified', 'rejected', 'suspended'],
+        required: false
+    })
+    verificationStatus?: string;
+
+    @ApiProperty({
+        description: 'Indicates if there are verification warnings',
+        example: true,
+        required: false
+    })
+    verificationWarning?: boolean;
+
+    @ApiProperty({
+        description: 'Verification warning message',
+        example: 'Your account is pending verification. You cannot create properties until verified.',
+        required: false
+    })
+    verificationMessage?: string;
 }

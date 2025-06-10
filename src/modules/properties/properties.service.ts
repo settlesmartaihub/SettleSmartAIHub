@@ -4,7 +4,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, FindOptionsWhere } from 'typeorm';
 import { Property, PropertyStatus, PropertyVerificationStatus, PropertyType, PropertyAmenities } from './entities/property.entity';
-import { Agent, AgentStatus } from '../agents/entities/agent.entity';
+import { Agent, AgentStatus, AgentVerificationStatus } from '../agents/entities/agent.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -26,25 +26,63 @@ export class PropertiesService {
         private readonly propertyMatchingService: PropertyMatchingService,
     ) { }
 
-    // Create new property listing
+    // Enhanced create property with verification checks
     async createProperty(agentId: string, createPropertyDto: CreatePropertyDto): Promise<Property> {
-        // Verify agent exists and is active
+        // Verify agent exists and check verification status
         const agent = await this.agentRepository.findOne({
-            where: { id: agentId, status: AgentStatus.ACTIVE }
+            where: { id: agentId },
+            select: ['id', 'verification_status', 'status', 'subscription_tier', 'name', 'email']
         });
 
         if (!agent) {
-            throw new NotFoundException('Agent not found or inactive');
+            throw new NotFoundException('Agent not found');
+        }
+
+        // Check if agent is verified
+        if (agent.verification_status !== AgentVerificationStatus.VERIFIED) {
+            throw new ForbiddenException({
+                message: 'Only verified agents can create property listings',
+                error: 'AGENT_NOT_VERIFIED',
+                details: {
+                    verification_status: agent.verification_status,
+                    required_status: 'verified',
+                    next_steps: 'Contact admin for account verification'
+                }
+            });
+        }
+
+        // Check if agent is active
+        if (agent.status !== AgentStatus.ACTIVE) {
+            throw new ForbiddenException({
+                message: 'Agent account is not active',
+                error: 'AGENT_NOT_ACTIVE',
+                details: {
+                    agent_status: agent.status,
+                    required_status: 'active'
+                }
+            });
         }
 
         // Check agent subscription limits
         const agentPropertiesCount = await this.propertyRepository.count({
-            where: { agent_id: agentId, status: In([PropertyStatus.AVAILABLE, PropertyStatus.RENTED]) }
+            where: {
+                agent_id: agentId,
+                status: In([PropertyStatus.AVAILABLE, PropertyStatus.RENTED])
+            }
         });
 
         const maxProperties = agent.subscription_tier === 'premium' ? 100 : 5;
         if (agentPropertiesCount >= maxProperties) {
-            throw new BadRequestException(`Agent has reached maximum property limit (${maxProperties})`);
+            throw new BadRequestException({
+                message: `You have reached your maximum property limit (${maxProperties} properties)`,
+                error: 'SUBSCRIPTION_LIMIT_REACHED',
+                details: {
+                    current_properties: agentPropertiesCount,
+                    max_properties: maxProperties,
+                    subscription_tier: agent.subscription_tier,
+                    upgrade_available: agent.subscription_tier === 'basic'
+                }
+            });
         }
 
         // Convert amenities array to PropertyAmenities object
@@ -77,7 +115,12 @@ export class PropertiesService {
             images: []
         });
 
-        return await this.propertyRepository.save(property);
+        const savedProperty = await this.propertyRepository.save(property);
+
+        // Log successful property creation
+        console.log(`✅ Property created successfully by verified agent: ${agent.email} - "${savedProperty.title}"`);
+
+        return savedProperty;
     }
 
     // Get property by ID with view count increment
@@ -100,13 +143,33 @@ export class PropertiesService {
         return property;
     }
 
-    // Update property
+    // Enhanced update property with verification checks
     async updateProperty(id: string, agentId: string, updatePropertyDto: UpdatePropertyDto): Promise<Property> {
         const property = await this.findPropertyById(id, false);
 
         // Check if agent owns this property
         if (property.agent_id !== agentId) {
             throw new ForbiddenException('You can only update your own properties');
+        }
+
+        // Verify agent is still verified (additional security check)
+        const agent = await this.agentRepository.findOne({
+            where: { id: agentId },
+            select: ['id', 'verification_status', 'status']
+        });
+
+        if (!agent || agent.verification_status !== AgentVerificationStatus.VERIFIED) {
+            throw new ForbiddenException({
+                message: 'Agent verification required to update properties',
+                error: 'AGENT_NOT_VERIFIED'
+            });
+        }
+
+        if (agent.status !== AgentStatus.ACTIVE) {
+            throw new ForbiddenException({
+                message: 'Agent account must be active to update properties',
+                error: 'AGENT_NOT_ACTIVE'
+            });
         }
 
         // Update location coordinates if address changed
@@ -129,12 +192,25 @@ export class PropertiesService {
         return await this.propertyRepository.save(property);
     }
 
-    // Delete property
+    // Enhanced delete property with verification checks
     async deleteProperty(id: string, agentId: string): Promise<void> {
         const property = await this.findPropertyById(id, false);
 
         if (property.agent_id !== agentId) {
             throw new ForbiddenException('You can only delete your own properties');
+        }
+
+        // Verify agent is still verified
+        const agent = await this.agentRepository.findOne({
+            where: { id: agentId },
+            select: ['id', 'verification_status', 'status']
+        });
+
+        if (!agent || agent.verification_status !== AgentVerificationStatus.VERIFIED) {
+            throw new ForbiddenException({
+                message: 'Agent verification required to delete properties',
+                error: 'AGENT_NOT_VERIFIED'
+            });
         }
 
         await this.propertyRepository.remove(property);

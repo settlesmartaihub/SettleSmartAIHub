@@ -1,4 +1,4 @@
-// File name: src/modules/agents/agents.module.ts (Update existing)
+// File name: src/modules/agents/agents.module.ts
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,6 +9,9 @@ import { AgentsRepository } from './agents.repository';
 import { PropertiesModule } from '../properties/properties.module';
 import { UsersModule } from '../users/users.module';
 
+// Import the verification guard
+import { AgentVerificationGuard } from '../../common/guards/agent-verification.guard';
+
 @Module({
     imports: [
         TypeOrmModule.forFeature([Agent]),
@@ -17,7 +20,15 @@ import { UsersModule } from '../users/users.module';
         UsersModule,     // For UsersService
     ],
     controllers: [AgentsController],
-    providers: [AgentsService, AgentsRepository],
-    exports: [AgentsService, AgentsRepository],
+    providers: [
+        AgentsService,
+        AgentsRepository,
+        AgentVerificationGuard, // Add the guard as a provider
+    ],
+    exports: [
+        AgentsService,
+        AgentsRepository,
+        AgentVerificationGuard, // Export so other modules can use it
+    ],
 })
 export class AgentsModule { }
